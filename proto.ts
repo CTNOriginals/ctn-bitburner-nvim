@@ -1,7 +1,7 @@
 
 export function main(ns: NS) {
 	ns.tprint('Prototype')
-	ns.run('managers/hacknet.ts')
+	ns.run('managers/hacknet.ts!')
 }
 
 

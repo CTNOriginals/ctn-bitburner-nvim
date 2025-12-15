@@ -1,5 +1,6 @@
 export async function main(ns: NS) {
-	ns.tprint("Hacking some nets!")
+	ns.disableLog('ALL')
+	ns.print("Hacking some nets!")
 
 	const nodes: Node[] = []
 	let numNodes = ns.hacknet.numNodes()
@@ -19,24 +20,22 @@ export async function main(ns: NS) {
 		}
 
 		if (ns.getPlayer().money > bestComp.GetCost()) {
+			ns.print(bestComp.String())
+
 			const i = bestComp.Upgrade()
 
 			if (bestComp.Typ == ENode.node) {
 				nodes.push(new Node(ns, i as number))
 			}
-
-			ns.tprint(bestComp.String())
 		}
 	}
 }
 
 function getCheapestUpgrade(nodes: Node[]): NodeComponent | null {
 	let bestVal = -1
-	let bestComp: NodeComponent = nodes[0].Components[1]
+	let bestComp: NodeComponent | null = null
 
 	for (const node of nodes) {
-		// ns.tprint(node.StringValue(' '))
-
 		let lowestVal: number = -1
 		let lowestComp = node.Components[0]
 
