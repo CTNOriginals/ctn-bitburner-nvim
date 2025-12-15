@@ -1,3 +1,19 @@
+import { BudgetBase } from "../../handlers/budget"
+
+class Buget extends BudgetBase {
+	constructor(private ns: NS, budget: number) {
+		let moneySource = ns.getMoneySources().sinceInstall
+		super(budget, moneySource.hacknet, moneySource.hacknet_expenses)
+	}
+
+	public CalculateGain(): number {
+		return super.CalculateGain(this.ns.getMoneySources().sinceInstall.hacknet)
+	}
+	public CalculateLoss(): number {
+		return super.CalculateLoss(this.ns.getMoneySources().sinceInstall.hacknet_expenses)
+	}
+}
+
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
 	ns.print("Hacking some nets!")
