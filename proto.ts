@@ -1,10 +1,13 @@
 
-export function main(ns: NS) {
+export async function main(ns: NS) {
 	ns.tprint('Prototype')
 	// ns.run('managers/hacknet.ts!')
 	ns.tprint(ns.getMoneySources().sinceInstall.hacknet)
 	ns.tprint(ns.getMoneySources().sinceInstall.hacknet_expenses)
 	ns.tprint(ns.getMoneySources().sinceInstall.hacknet - ns.getMoneySources().sinceInstall.hacknet_expenses)
+	while (true) {
+		await ns.sleep(1000)
+	}
 }
 
 
