@@ -39,12 +39,12 @@ export abstract class BudgetBase {
 			- this.CalculateLoss()
 	}
 
-	public String(): string {
+	public String(inst: BudgetBase = this): string {
 		return [
 			`Budget:`,
-			`  Current: ${this.Current}`,
-			`  Gain: ${this.CalculateGain()}`,
-			`  Loss: ${this.CalculateLoss()}`
+			`  Current: ${inst.Current}`,
+			`  Gain: ${inst.CalculateGain()}`,
+			`  Loss: ${inst.CalculateLoss()}`
 		].join('\n')
 	}
 }

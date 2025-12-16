@@ -46,7 +46,6 @@ export async function main(ns: NS) {
 		if (bestComp.Typ == ENode.node) {
 			nodes.push(new Node(ns, i as number))
 		}
-
 		ns.print(budget.String())
 		ns.print(' ')
 	}
