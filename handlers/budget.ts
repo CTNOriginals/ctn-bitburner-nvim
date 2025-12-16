@@ -1,15 +1,12 @@
 export abstract class BudgetBase {
-	protected gain: number
-	protected loss: number
+	protected gain: number = 0
+	protected loss: number = 0
 
 	constructor(
 		private initialValue: number,
 		private initialGain: number = 0,
 		private initialLoss: number = 0
-	) {
-		this.gain = initialGain
-		this.loss = initialLoss
-	}
+	) { }
 
 	public AddGain(val: number) {
 		this.gain += val
@@ -18,18 +15,36 @@ export abstract class BudgetBase {
 		this.loss += val
 	}
 
-	public CalculateGain(val: number = this.gain): number {
-		this.gain -= val
-		return this.gain
+	/** Calculates the current total gain
+	 * @param val The current total gain
+	*/
+	public CalculateGain(val: number = this.initialGain): number {
+		return val
+			- this.initialGain
+			+ this.gain
 	}
-	public CalculateLoss(val: number = this.loss): number {
-		this.loss -= val
-		return this.loss
+
+	/** Calculates the current total loss
+	 * @param val The current total loss
+	*/
+	public CalculateLoss(val: number = this.initialLoss): number {
+		return val
+			- this.initialLoss
+			+ this.loss
 	}
 
 	public get Current() {
 		return this.initialValue
 			+ this.CalculateGain()
 			- this.CalculateLoss()
+	}
+
+	public String(): string {
+		return [
+			`Budget:`,
+			`  Current: ${this.Current}`,
+			`  Gain: ${this.CalculateGain()}`,
+			`  Loss: ${this.CalculateLoss()}`
+		].join('\n')
 	}
 }

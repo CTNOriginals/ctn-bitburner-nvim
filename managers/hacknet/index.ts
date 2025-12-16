@@ -1,22 +1,34 @@
 import { BudgetBase } from "../../handlers/budget"
 
-class Buget extends BudgetBase {
+class Budget extends BudgetBase {
 	constructor(private ns: NS, budget: number) {
 		let moneySource = ns.getMoneySources().sinceInstall
-		super(budget, moneySource.hacknet, moneySource.hacknet_expenses)
+		super(budget, moneySource.hacknet, -moneySource.hacknet_expenses)
 	}
 
 	public CalculateGain(): number {
 		return super.CalculateGain(this.ns.getMoneySources().sinceInstall.hacknet)
 	}
 	public CalculateLoss(): number {
-		return super.CalculateLoss(this.ns.getMoneySources().sinceInstall.hacknet_expenses)
+		return super.CalculateLoss(-this.ns.getMoneySources().sinceInstall.hacknet_expenses)
+	}
+
+	public String(): string {
+		return [
+			`Budget:`,
+			`  Current: ${this.Current}`,
+			`  Gain: ${this.CalculateGain()}`,
+			`  Loss: ${this.CalculateLoss()}`
+		].join('\n')
 	}
 }
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
 	ns.print("Hacking some nets!")
+
+	const budget = new Budget(ns, ns.getPlayer().money * 0.5)
+	ns.print(budget.String())
 
 	const nodes: Node[] = []
 	let numNodes = ns.hacknet.numNodes()
@@ -27,7 +39,7 @@ export async function main(ns: NS) {
 
 	while (true) {
 		// sleep first to account for the chance of the loop continueing in the middle
-		await ns.sleep(100)
+		await ns.sleep(500)
 
 		let bestComp = getCheapestUpgrade(nodes)
 
@@ -35,7 +47,7 @@ export async function main(ns: NS) {
 			continue
 		}
 
-		if (ns.getPlayer().money > bestComp.GetCost()) {
+		if (budget.Current > bestComp.GetCost()) {
 			ns.print(bestComp.String())
 
 			const i = bestComp.Upgrade()
@@ -43,6 +55,9 @@ export async function main(ns: NS) {
 			if (bestComp.Typ == ENode.node) {
 				nodes.push(new Node(ns, i as number))
 			}
+
+			ns.print(budget.String())
+			ns.print(' ')
 		}
 	}
 }
