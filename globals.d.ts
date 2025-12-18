@@ -6,5 +6,7 @@ declare global {
 	type RunningScript = _NSD.RunningScript
 	type RecentScript = _NSD.RecentScript
 	type ScriptArg = _NSD.ScriptArg
+	type FileMetadata = _NSD.FileMetadata
+	type SpawnOptions = _NSD.SpawnOptions
 }
 
