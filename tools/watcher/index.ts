@@ -1,6 +1,5 @@
 
 type TScriptMap = { [pid: number]: RunningScript }
-type TFileModTime = { [file: string]: number }
 
 
 export async function main(ns: NS) {
@@ -40,15 +39,9 @@ function getWatchMap(ns: NS): TScriptMap {
 	}
 
 	for (const recent of ns.getRecentScripts()) {
-		// if (recent.filename == ns.getScriptName()) {
-		// 	ns.tprint('ignoring recent watcher')
-		// 	continue
-		// }
-
 		if (
 			!recent.args.includes('--watch')
 			|| recent.tailProperties === null
-			|| Object.keys(WatchMap).includes(recent.pid.toString())
 		) {
 			continue
 		}
@@ -60,7 +53,8 @@ function getWatchMap(ns: NS): TScriptMap {
 }
 
 function restartScript(ns: NS, script: RunningScript) {
-	ns.print(`Restarting script: ${script.pid} ${script.filename}`)
+	ns.print(`Restarting script: ${script.pid} ${script.filename} ${script.args}`)
+
 	if (ns.isRunning(script.pid)) {
 		if (script.pid == ns.pid) {
 			restartSelf(ns, script)
@@ -86,12 +80,13 @@ function restartScript(ns: NS, script: RunningScript) {
 	ns.ui.moveTail(script.tailProperties.x, script.tailProperties.y, pid)
 }
 
+//! Will spawn multiple if the watchers tail window is open
 function restartSelf(ns: NS, script: RunningScript) {
-	ns.tprint(`Killing ${ns.pid} ${script.filename} ${script.args}`)
-	if (script.tailProperties === null) {
-		// script.args.push('--tail')
-		// ns.ui.closeTail()
-	}
+	ns.tprint(`Killing self: ${ns.pid} ${script.filename} ${script.args}`)
+	// if (script.tailProperties === null) {
+	// 	// script.args.push('--tail')
+	// 	// ns.ui.closeTail()
+	// }
 
 	ns.spawn(script.filename, { spawnDelay: 0, preventDuplicates: true }, ...script.args)
 }
