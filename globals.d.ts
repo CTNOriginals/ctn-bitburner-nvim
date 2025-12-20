@@ -1,12 +1,16 @@
-import type * as _NSD from './NetscriptDefinitions';
+import { Logger as _Logger } from './logging';
+import type * as NSD from './NetscriptDefinitions';
+
 
 declare global {
-	type NS = _NSD.NS;
-	type ProcessInfo = _NSD.ProcessInfo
-	type RunningScript = _NSD.RunningScript
-	type RecentScript = _NSD.RecentScript
-	type ScriptArg = _NSD.ScriptArg
-	type FileMetadata = _NSD.FileMetadata
-	type SpawnOptions = _NSD.SpawnOptions
+	type NS = NSD.NS
+	type ProcessInfo = NSD.ProcessInfo
+	type RunningScript = NSD.RunningScript
+	type RecentScript = NSD.RecentScript
+	type ScriptArg = NSD.ScriptArg
+	type FileMetadata = NSD.FileMetadata
+	type SpawnOptions = NSD.SpawnOptions
+
+	type Logger = _Logger
 }
 

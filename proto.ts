@@ -1,41 +1,27 @@
-let percist = 0
+import { Logger } from "./logging/index.ts"
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
+	const logger = new Logger(ns)
 
-	ns.print(percist)
-	await ns.sleep(4000)
-	percist++
+	while (true) {
+		await ns.asleep(100)
 
-	// while (true) {
-	// 	await ns.sleep(1000)
-	// 	const testScript = getTestScript(ns)
-	//
-	// 	if (!testScript) {
-	// 		continue
-	// 	}
-	//
-	// 	let now = new Date().getTime()
-	//
-	// 	let mtime = ns.getFileMetadata(testScript.filename).mtime
-	// 	let msec = (now - mtime) / 1000
-	// 	let runtime = testScript.onlineRunningTime
-	//
-	// 	ns.print(`script  : ${testScript.pid} ${testScript.filename} ${testScript.args}`)
-	// 	ns.print(`\nmod time: ${mtime}`)
-	// 	ns.print(`mod sec : ${msec}`)
-	//
-	// 	if ('timeOfDeath' in testScript) {
-	// 		runtime = now - testScript.endTime
-	// 		runtime /= 1000
-	// 	}
-	//
-	// 	ns.print('\n')
-	// 	ns.print(`${('timeOfDeath' in testScript) ? 'death  ' : 'runtime'} : ${runtime}`)
-	// 	ns.print(`diff    : ${msec - runtime}`)
-	//
-	// 	ns.print('\n\n')
-	// }
+		const max = ns.getServerMaxRam('home')
+		const used = ns.getServerUsedRam('home')
+		const cost = ns.getScriptRam('share.ts')
+		const free = (max - 100) - used
+		const threads = Math.floor(free / cost)
+
+		if (threads <= 0) {
+			continue
+		}
+
+		ns.run('share.ts', threads)
+		logger.log(`Max: ${max}, Used: ${used}, Free: ${free}, Threads: ${threads}`)
+
+		await ns.asleep(10000)
+	}
 }
 
 type TTestScript = RunningScript | RecentScript | null

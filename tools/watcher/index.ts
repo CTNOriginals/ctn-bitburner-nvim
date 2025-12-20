@@ -4,16 +4,15 @@ type TScriptMap = { [pid: number]: RunningScript }
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
-	// ns.clearLog()
 
 	const updateInterval = 1000
 
 	while (true) {
 		await ns.sleep(updateInterval)
-		const WatchMap = getWatchMap(ns)
+		const ScriptMap = getWatchMap(ns)
 
-		for (const pid in WatchMap) {
-			const script = WatchMap[pid]
+		for (const pid in ScriptMap) {
+			const script = ScriptMap[pid]
 			const modTime = ns.getFileMetadata(script.filename).mtime
 
 			if (script.startTime < modTime) {
@@ -59,9 +58,9 @@ function restartScript(ns: NS, script: RunningScript) {
 		if (script.pid == ns.pid) {
 			restartSelf(ns, script)
 			return
-		} else {
-			ns.kill(script.pid)
 		}
+
+		ns.kill(script.pid)
 	}
 
 	const pid = ns.run(script.filename, undefined, ...script.args)
