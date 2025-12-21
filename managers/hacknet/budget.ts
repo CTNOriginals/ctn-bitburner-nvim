@@ -1,9 +1,14 @@
-import { BudgetBase } from "../../handlers/budget"
+import { BudgetBase } from "../../handlers/budget.ts"
 
 export class Budget extends BudgetBase {
-	constructor(private ns: NS, budget: number) {
+	constructor(private ns: NS, budget: number, gain?: number, loss?: number) {
 		let moneySource = ns.getMoneySources().sinceInstall
-		super(budget, moneySource.hacknet, -moneySource.hacknet_expenses)
+
+		super(
+			budget,
+			(gain) ? gain : moneySource.hacknet,
+			(loss) ? loss : -moneySource.hacknet_expenses
+		)
 	}
 
 	public CalculateGain(): number {

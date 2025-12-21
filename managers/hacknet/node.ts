@@ -36,7 +36,7 @@ export class NodeComponent {
 			case ENode.node: {
 				this.getCost = ns.hacknet.getPurchaseNodeCost
 				this.upgrade = ns.hacknet.purchaseNode
-				this.MaxValue = ns.hacknet.maxNumNodes()
+				this.MaxValue = 23 //ns.hacknet.maxNumNodes()
 			} break;
 			case ENode.level: {
 				this.getCost = ns.hacknet.getLevelUpgradeCost

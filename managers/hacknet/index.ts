@@ -1,12 +1,25 @@
-import { ENode, Node, NodeComponent } from "./node"
-import { Budget } from "./budget"
+import { ENode, Node, NodeComponent } from "./node.ts"
+import { Budget } from "./budget.ts"
+
+// Last known budget value to save between restarts
+let budgetValue: number = -1
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
 	ns.print("Hacking some nets!")
 
-	const budget = new Budget(ns, ns.getPlayer().money * 0.5)
+
+	if (budgetValue === -1) {
+		budgetValue = ns.getPlayer().money * 0.5
+	} else {
+		ns.print(`value: ${budgetValue}`)
+	}
+
+	const budget = new Budget(ns, budgetValue)
 	ns.print(budget.String())
+	ns.atExit(() => {
+		budgetValue = budget.Current
+	})
 
 	const nodes: Node[] = []
 	let numNodes = ns.hacknet.numNodes()
@@ -46,7 +59,7 @@ export async function main(ns: NS) {
 		if (bestComp.Typ == ENode.node) {
 			nodes.push(new Node(ns, i as number))
 		}
-		ns.print(budget.String())
+		// ns.print(budget.String())
 		ns.print(' ')
 	}
 }
