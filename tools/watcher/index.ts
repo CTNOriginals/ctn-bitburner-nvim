@@ -1,9 +1,13 @@
+import { Logger } from "../../logging/index.ts"
+import { getAllImportPaths } from "./tmp.ts"
 
 type TScriptMap = { [pid: number]: RunningScript }
 
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
+	ns.clearLog()
+	const logger = new Logger(ns)
 
 	const updateInterval = 1000
 
@@ -13,11 +17,20 @@ export async function main(ns: NS) {
 
 		for (const pid in ScriptMap) {
 			const script = ScriptMap[pid]
-			const modTime = ns.getFileMetadata(script.filename).mtime
 
-			if (script.startTime < modTime) {
-				restartScript(ns, script)
+			const pathList: string[] = [script.filename]
+			pathList.push(...getAllImportPaths(ns, script.filename))
+
+			for (const path of pathList) {
+				const modTime = ns.getFileMetadata(path).mtime
+				// logger.log(`${path}: ${modTime}`)
+
+				if (script.startTime < modTime) {
+					restartScript(ns, script)
+					break
+				}
 			}
+			// logger.log('\n')
 		}
 	}
 }
