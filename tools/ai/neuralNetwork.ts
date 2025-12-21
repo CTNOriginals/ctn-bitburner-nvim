@@ -1,5 +1,5 @@
 //* Source/Guide: https://medium.com/@pat_metzdorf/building-a-basic-neural-net-using-javascript-1f554780dc60
-import { MSE, ReLU, ReLUDeriv, Sigmoid, SigmoidDeriv } from "./functions";
+import { MSE, ReLU, ReLUDeriv, Sigmoid, SigmoidDeriv } from "./functions.ts";
 
 type ActivationFunction = (x: number) => number;
 

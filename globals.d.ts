@@ -1,6 +1,7 @@
-import { Logger as _Logger } from './logging';
 import type * as NSD from './NetscriptDefinitions';
 
+import { Logger as _Logger } from './logging';
+import * as _types from './types/index.ts'
 
 declare global {
 	type NS = NSD.NS
@@ -12,5 +13,7 @@ declare global {
 	type SpawnOptions = NSD.SpawnOptions
 
 	type Logger = _Logger
+
+	type ArrayN<T, N extends number> = _types.ReadonlyArrayExactLength<T, N>
 }
 
