@@ -1,11 +1,11 @@
 export class Logger {
 	constructor(private ns: NS) { }
 
-	public log(...msg: string[]) {
+	public log(...msg: any[]) {
 		this.ns.print(...msg)
 	}
 
-	public terminal(...msg: string[]) {
+	public terminal(...msg: any[]) {
 		this.ns.tprint(...msg)
 	}
 
