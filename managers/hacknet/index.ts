@@ -9,7 +9,7 @@ export async function main(ns: NS) {
 	ns.print("Hacking some nets!")
 
 
-	if (budgetValue === -1) {
+	if (budgetValue === -1 || ns.args.includes('--reset')) {
 		budgetValue = ns.getPlayer().money * 0.5
 	} else {
 		ns.print(`value: ${budgetValue}`)
