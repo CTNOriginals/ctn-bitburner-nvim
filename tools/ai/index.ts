@@ -1,23 +1,39 @@
-// Source: https://github.com/CTNOriginals/CTN-Bitburner/blob/main/src/ai/neuralNetwork.ts
-import { Layer, NeuralNetwork } from "./neuralNetwork.ts";
-import { MSE, ReLU, ReLUDeriv, Sigmoid, SigmoidDeriv } from "./functions.ts";
+type TValueOf<T> = T[keyof T]
+class CIODef {
+	/** The variences that the value may represent
+	 * key: The name of the varient
+	 * Value: The weight of the varient, meaning how much space this varient takes compared to the others.
+	 * @example 
+	 * // If the value of this IO is < 0.5, the varience would return 'off', otherwise 'on'
+	 * ['off', 'on']
+	*/
+	public Variants: string[] = ['off', 'on']
+	public Count: number
 
-export async function main(ns: NS) {
-	ns.disableLog('ALL');
+	public GetVarientFromValue(val: number): typeof this['Variants'][number] {
+		return this.Variants[Math.round(val * (this.Variants.length - 1))]
+	}
 
-	// console.clear();
+	public GetValueFromVarient(variant: typeof this['Variants'][number]): number {
+		if (!this.Variants.includes(variant)) {
+			throw `Variant does not include key: ${variant}`
+		}
 
-	const nn = new NeuralNetwork([2, 4, 4, 1]);
-	const inputs = [[0, 0], [0, 1], [1, 0], [1, 1]];
-	const targets = [[0], [1], [1], [0]];
-
-	// console.log(targets)
-	nn.train(inputs, targets, 10000, 0.1);
-
-	inputs.forEach((input, i) => {
-		ns.print(`Input: ${input}, Target: ${targets[i]}, Predicted: ${nn.forward(input)}`)
-	})
-
-	ns.write('tmp.json', JSON.stringify(nn.layers, null, 2), 'w');
+		return (1 / (this.Variants.length - 1)) * this.Variants.indexOf(variant)
+	}
 }
+
+type TIODefMap = { [key: string]: Pick<CIODef, 'Variants' | 'Count'> }
+
+export abstract class AAIDef {
+	protected inputs: TIODefMap
+	protected outputs: TIODefMap
+
+	constructor(inputs: TIODefMap, outputs: TIODefMap) {
+		this.inputs = inputs
+		this.outputs = outputs
+	}
+}
+
+
 
