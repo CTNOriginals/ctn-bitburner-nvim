@@ -1,7 +1,7 @@
 import { NeuralNetwork } from "./neuralNetwork.ts"
 
 type TIO = { [key: string]: CIODef }
-type ExtractVariants<T> = T extends CIODef<infer U> ? U : never;
+export type ExtractVariants<T> = T extends CIODef<infer U> ? U : never;
 export type IOToVariants<T extends TIO> = {
 	[K in keyof T]: ExtractVariants<T[K]>
 };
@@ -39,8 +39,8 @@ export class CIODef<T = string> {
 }
 
 export abstract class AAIDef {
-	protected abstract inputs: TIO
-	protected abstract outputs: TIO
+	public abstract inputs: TIO
+	public abstract outputs: TIO
 
 	protected abstract hiddenLayers: number[]
 
@@ -85,6 +85,18 @@ export abstract class AAIDef {
 		this.neuralNetwork.train(ins, outs, cycles, rate)
 	}
 
+	// protected getIOAsValues<IO extends IOToVariants<TIO>>(io: IO): number[] {
+	// 	const out: number[] = []
+	// 	for (const key in io) {
+	// 		const variant = io[key as keyof IO];
+	// 		const val = variant.GetValueFromVarient(variant);
+	// 	}
+	// }
+
+	protected test(inputs: number[]): number[] {
+		return this.neuralNetwork.forward(inputs)
+	}
+
 	// Protected helper that does the actual work
 	protected trainWithVariants<
 		I extends IOToVariants<TIO>,
@@ -116,5 +128,8 @@ export abstract class AAIDef {
 		this.StartTraining(transformedData, cycles, rate);
 	}
 
+	// protected baseTest<I extends IOToVariants<TIO>, O extends IOToVariants<TIO>>(inputs: I): O {
+	// 	this.neuralNetwork.forward()
+	// }
 }
 
