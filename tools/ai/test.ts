@@ -5,7 +5,13 @@ import { AAIDef, CIODef, ExtractVariants, IOToVariants } from "./index.ts";
 
 import { Logger } from "../../logging/index.ts";
 
-class AIXOR extends AAIDef {
+
+// @ts-ignore
+// The error was that AAIDef<AIXOR> is a circular ref
+// which is true and is bad, but it doesnt actually break
+// and the payoff for the types functioning like this is way greater
+// so shut the fuck up TS
+class AIXOR extends AAIDef<AIXOR> {
 	private io = CIODef.define('0', '1')
 
 	public inputs = {
@@ -20,55 +26,20 @@ class AIXOR extends AAIDef {
 
 	constructor() {
 		super()
-		this.init(this)
-	}
-
-	public Train<
-		I extends IOToVariants<typeof this.inputs>,
-		O extends IOToVariants<typeof this.outputs>
-	>(
-		data: { inputs: I, targets: O }[],
-		cycles: number,
-		rate: number
-	): void {
-		this.trainWithVariants(data, cycles, rate);
-	}
-
-	public Test<
-		I extends IOToVariants<typeof this.inputs>,
-		O extends IOToVariants<typeof this.outputs>
-	>(inputs: I): O {
-		const keys = Object.keys(this.outputs) as (keyof typeof this.outputs)[]
-
-		const ins: number[] = []
-		let results = {}
-
-		for (const key in inputs) {
-			const def = this.inputs[key as keyof typeof this.inputs]
-			const variant = inputs[key as keyof I]
-			ins.push(def.GetValueFromVarient(variant as ExtractVariants<typeof def>))
-		}
-
-		const outs: number[] = this.test(ins)
-
-		for (let i = 0; i < outs.length; i++) {
-			const key: keyof typeof this.outputs = keys[i]
-			const def = this.outputs[key]
-			results[key] = def.GetVarientFromValue(outs[i])
-		}
-
-		return results as O
+		super.createNeuralNetwork()
 	}
 }
 
 
 let logger: Logger
+let thisNS
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL');
 	ns.clearLog()
 	console.clear();
 
+	thisNS = ns
 	logger = new Logger(ns)
 
 	const ai = new AIXOR()
@@ -76,23 +47,27 @@ export async function main(ns: NS) {
 	// logger.log(JSON.stringify(this.neuralNetwork, null, '  '))
 	logger.log(ai.inputs)
 	logger.log(ai.outputs)
+	ai.tmp(ns)
 	// logger.log(ai.inputs.cin.GetValueFromVarient('on'))
 	ai.Train([
+		// {
+		// 	inputs: {x: ''}
+		// },
 		{
 			inputs: { x: '0', y: '0' },
-			targets: { out: '0' }
+			outputs: { out: '0' }
 		},
 		{
 			inputs: { x: '1', y: '0' },
-			targets: { out: '1' }
+			outputs: { out: '1' }
 		},
 		{
 			inputs: { x: '0', y: '1' },
-			targets: { out: '1' }
+			outputs: { out: '1' }
 		},
 		{
 			inputs: { x: '1', y: '1' },
-			targets: { out: '0' }
+			outputs: { out: '0' }
 		},
 	], 10000, 0.1)
 
