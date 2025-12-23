@@ -3,7 +3,7 @@ I have been testing it in `test.ts`  with an xor solver, this worked pretty well
 
 
 Now i am designing a system that makes it easier to define AI models with specific purposes.
-The idea is as follows (a start of this can be seen in `index.ts`):
+The idea is as follows (a start of this can be seen in `definition.ts`):
 An abstract class that will require a specific definition of in/outputs (io from here, when i say io, i mean either an input or output, not boths) which will remain the same after the extended class has defined them.
 The definition of an io is a class that will accept so called variants for that single input.
 inputs and outputs will always contain a value between 0 and 1.

@@ -1,10 +1,10 @@
 // Source: https://github.com/CTNOriginals/CTN-Bitburner/blob/main/src/ai/neuralNetwork.ts
 import { NeuralNetwork } from "./neuralNetwork.ts";
-import { AAIDef, CIODef } from "./index.ts";
+import { AAIDef, CIODef } from "./definition.ts";
 
 import { Logger } from "../logging/index.ts";
 
-// @ts-ignore
+// @ts-expect-error: ts2310 circular reference
 // The error was that AAIDef<AIXOR> is a circular ref
 // which is true and is bad, but it doesnt actually break
 // and the payoff for the types functioning like this is way greater

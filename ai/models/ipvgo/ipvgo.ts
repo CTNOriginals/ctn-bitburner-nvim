@@ -1,4 +1,4 @@
-import { AAIDef, CIODef } from "../../index.ts";
+import { AAIDef, CIODef } from "../../definition.ts";
 
 const NodeState = {
 	empty: 'empty',
