@@ -6,7 +6,7 @@ export type IOToVariants<T extends TIO> = {
 	[K in keyof T]: ExtractVariants<T[K]>
 };
 
-export class CIODef<T = string> {
+export class CIODef<T = string | number> {
 	/** The variences that the value may represent
 	 * key: The name of the varient
 	 * Value: The weight of the varient, meaning how much space this varient takes compared to the others.
@@ -48,24 +48,26 @@ export abstract class AAIDef<
 
 	public abstract hiddenLayers: number[]
 
-	protected get inputCount(): number {
-		return Object.keys(this.inputs).length
-	}
-	protected get outputCount(): number {
-		return Object.keys(this.outputs).length
-	}
-
 	protected neuralNetwork: NeuralNetwork
 
 	constructor() { }
 
-	protected createNeuralNetwork() {
-		this.neuralNetwork = new NeuralNetwork([this.inputCount, ...this.hiddenLayers, this.outputCount])
+	public get inputKeys(): (keyof TInst['inputs'])[] {
+		return Object.keys(this.inputs)
+	}
+	public get outputKeys(): (keyof TInst['outputs'])[] {
+		return Object.keys(this.outputs)
 	}
 
-	public tmp(ns: NS) {
-		ns.print(this.inputs)
-		ns.print(this.outputs)
+	public get inputCount(): number {
+		return this.inputKeys.length
+	}
+	public get outputCount(): number {
+		return this.outputKeys.length
+	}
+
+	protected createNeuralNetwork() {
+		this.neuralNetwork = new NeuralNetwork([this.inputCount, ...this.hiddenLayers, this.outputCount])
 	}
 
 	public StartTraining(
@@ -87,7 +89,46 @@ export abstract class AAIDef<
 		this.neuralNetwork.train(ins, outs, cycles, rate)
 	}
 
-	// private getIOAsValues
+	private getIOAsValues<IO extends TI | TO>(typ: 'i' | 'o', io: IO): number[] {
+		const out: number[] = []
+		const ioDef = typ == 'i' ? this.inputs : this.outputs
+
+		for (const key in io) {
+			const variant = io[key]
+			out.push(ioDef[key].GetValueFromVarient(variant as ExtractVariants<typeof ioDef>))
+		}
+
+		return out
+	}
+	private getIOAsVariants<IO extends TI | TO>(typ: 'i' | 'o', io: number[]): IO {
+		const out = {} as IO
+		const ioDef = typ == 'i' ? this.inputs : this.outputs
+		const keys = Object.keys(ioDef)
+
+		for (let i = 0; i < io.length; i++) {
+			const val = io[i]
+			const key = keys[i]
+
+			out[key] = ioDef[key].GetVarientFromValue(val)
+		}
+
+		return out
+	}
+
+
+	public GetInputValues(io: TI): number[] {
+		return this.getIOAsValues('i', io)
+	}
+	public GetOutputsValues(io: TO): number[] {
+		return this.getIOAsValues('o', io)
+	}
+	public GetInputVariants(io: number[]): TI {
+		return this.getIOAsVariants('i', io)
+	}
+	public GetOutputVariants(io: number[]): TO {
+		return this.getIOAsVariants('o', io)
+	}
+
 
 	// protected getIOAsValues<TInst extends AAIDef>(io: IOToVariants<TInst['inputs']> | TInst['outputs']): number[] {
 	// 	const out: number[] = []
@@ -106,26 +147,37 @@ export abstract class AAIDef<
 		cycles: number,
 		rate: number
 	): void {
-		const transformedData = data.map(entry => {
-			const inputValues = Object.keys(this.inputs).map(key => {
-				const ioDef = this.inputs[key];
-				const variant = entry.inputs[key];
-				return ioDef.GetValueFromVarient(variant);
-			});
+		// const transformedData = data.map(entry => {
+		// 	const inputValues = Object.keys(this.inputs).map(key => {
+		// 		const ioDef = this.inputs[key];
+		// 		const variant = entry.inputs[key];
+		// 		return ioDef.GetValueFromVarient(variant);
+		// 	});
+		//
+		// 	const targetValues = Object.keys(this.outputs).map(key => {
+		// 		const ioDef = this.outputs[key];
+		// 		const variant = entry.outputs[key];
+		// 		return ioDef.GetValueFromVarient(variant);
+		// 	});
+		//
+		// 	return {
+		// 		inputs: inputValues,
+		// 		targets: targetValues,
+		// 	};
+		// });
 
-			const targetValues = Object.keys(this.outputs).map(key => {
-				const ioDef = this.outputs[key];
-				const variant = entry.outputs[key];
-				return ioDef.GetValueFromVarient(variant);
-			});
+		const ins: number[][] = []
+		const outs: number[][] = []
 
-			return {
-				inputs: inputValues,
-				targets: targetValues,
-			};
-		});
+		for (const d of data) {
+			ins.push(this.GetInputValues(d.inputs))
+			outs.push(this.GetOutputsValues(d.outputs))
+		}
 
-		this.StartTraining(transformedData, cycles, rate);
+
+		this.neuralNetwork.train(ins, outs, cycles, rate)
+
+		// this.StartTraining(transformedData, cycles, rate);
 	}
 
 	public Test(inputs: TI): TO {

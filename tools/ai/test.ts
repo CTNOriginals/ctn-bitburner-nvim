@@ -12,7 +12,7 @@ import { Logger } from "../../logging/index.ts";
 // and the payoff for the types functioning like this is way greater
 // so shut the fuck up TS
 class AIXOR extends AAIDef<AIXOR> {
-	private io = CIODef.define('0', '1')
+	private io = CIODef.define(0, 1)
 
 	public inputs = {
 		x: this.io,
@@ -30,7 +30,6 @@ class AIXOR extends AAIDef<AIXOR> {
 	}
 }
 
-
 let logger: Logger
 let thisNS
 
@@ -44,37 +43,36 @@ export async function main(ns: NS) {
 
 	const ai = new AIXOR()
 
-	// logger.log(JSON.stringify(this.neuralNetwork, null, '  '))
 	logger.log(ai.inputs)
 	logger.log(ai.outputs)
-	ai.tmp(ns)
-	// logger.log(ai.inputs.cin.GetValueFromVarient('on'))
 	ai.Train([
-		// {
-		// 	inputs: {x: ''}
-		// },
 		{
-			inputs: { x: '0', y: '0' },
-			outputs: { out: '0' }
+			inputs: { x: 0, y: 0 },
+			outputs: { out: 0 }
 		},
 		{
-			inputs: { x: '1', y: '0' },
-			outputs: { out: '1' }
+			inputs: { x: 1, y: 0 },
+			outputs: { out: 1 }
 		},
 		{
-			inputs: { x: '0', y: '1' },
-			outputs: { out: '1' }
+			inputs: { x: 0, y: 1 },
+			outputs: { out: 1 }
 		},
 		{
-			inputs: { x: '1', y: '1' },
-			outputs: { out: '0' }
+			inputs: { x: 1, y: 1 },
+			outputs: { out: 0 }
 		},
 	], 10000, 0.1)
 
-	logger.log('00: ', ai.Test({ x: '0', y: '0' })['out'])
-	logger.log('01: ', ai.Test({ x: '0', y: '1' })['out'])
-	logger.log('10: ', ai.Test({ x: '1', y: '0' })['out'])
-	logger.log('11: ', ai.Test({ x: '1', y: '1' })['out'])
+	logger.log('00: ', ai.Test({ x: 0, y: 0 })['out'])
+	logger.log('01: ', ai.Test({ x: 0, y: 1 })['out'])
+	logger.log('10: ', ai.Test({ x: 1, y: 0 })['out'])
+	logger.log('11: ', ai.Test({ x: 1, y: 1 })['out'])
+
+	logger.log(ai.GetInputValues({ x: 1, y: 0 }))
+	logger.log(ai.GetInputVariants([0, 1]))
+	logger.log(ai.GetOutputVariants([1]))
+	logger.log(ai.inputKeys)
 }
 
 function xorSolver(ns: NS) {
