@@ -1,15 +1,14 @@
 import { AAIDef, CIODef } from "../../definition.ts";
 
 const NodeState = {
-	empty: 'empty',
-	black: 'black',
-	white: 'white',
-	static: 'static',
+	empty: '.',
+	black: 'X',
+	white: 'O',
+	static: '#',
 } as const
 
 // Node Input, very short name because it has to be written atleast 25x
-const ni = CIODef.define(...Object.keys(NodeState))
-const actions = CIODef.define('place', 'pass')
+const ni = CIODef.define(...Object.values(NodeState))
 const position = CIODef.define(
 	0, 1, 2, 3, 4,
 	5, 6, 7, 8, 9,
@@ -17,6 +16,9 @@ const position = CIODef.define(
 	15, 16, 17, 18, 19,
 	20, 21, 22, 23, 24
 )
+// redundant as it is just simple to know if the ai should skip
+// Maybe implement later with more time
+// const actions = CIODef.define('place', 'pass')
 
 // @ts-ignore:next-line
 export class GoAI5 extends AAIDef<GoAI5> {
@@ -27,8 +29,8 @@ export class GoAI5 extends AAIDef<GoAI5> {
 		x15: ni, x16: ni, x17: ni, x18: ni, x19: ni,
 		x20: ni, x21: ni, x22: ni, x23: ni, x24: ni,
 	} as const
+
 	public Outputs = {
-		action: actions,
 		x: position,
 		y: position,
 	} as const
