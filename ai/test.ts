@@ -2,6 +2,8 @@
 import { NeuralNetwork } from "./neuralNetwork.ts";
 import { AAIDef, CIODef } from "./definition.ts";
 
+import * as AdderTest from './models/adder/test.ts'
+
 import { Logger } from "../logging/index.ts";
 
 // @ts-expect-error: ts2310 circular reference
@@ -39,38 +41,40 @@ export async function main(ns: NS) {
 	thisNS = ns
 	logger = new Logger(ns)
 
-	const ai = new AIXOR()
+	AdderTest.main(ns)
 
-	logger.log(ai.Inputs)
-	logger.log(ai.Outputs)
-	ai.Train([
-		{
-			inputs: { x: 0, y: 0 },
-			outputs: { out: 0 }
-		},
-		{
-			inputs: { x: 1, y: 0 },
-			outputs: { out: 1 }
-		},
-		{
-			inputs: { x: 0, y: 1 },
-			outputs: { out: 1 }
-		},
-		{
-			inputs: { x: 1, y: 1 },
-			outputs: { out: 0 }
-		},
-	], 10000, 0.5)
-
-	logger.log('00: ', ai.Test({ x: 0, y: 0 })['out'])
-	logger.log('01: ', ai.Test({ x: 0, y: 1 })['out'])
-	logger.log('10: ', ai.Test({ x: 1, y: 0 })['out'])
-	logger.log('11: ', ai.Test({ x: 1, y: 1 })['out'])
-
-	logger.log(ai.GetInputValues({ x: 1, y: 0 }))
-	logger.log(ai.GetInputVariants([0, 1]))
-	logger.log(ai.GetOutputVariants([1]))
-	logger.log(ai.InputKeys)
+	// const ai = new AIXOR()
+	//
+	// logger.log(ai.Inputs)
+	// logger.log(ai.Outputs)
+	// ai.Train([
+	// 	{
+	// 		inputs: { x: 0, y: 0 },
+	// 		outputs: { out: 0 }
+	// 	},
+	// 	{
+	// 		inputs: { x: 1, y: 0 },
+	// 		outputs: { out: 1 }
+	// 	},
+	// 	{
+	// 		inputs: { x: 0, y: 1 },
+	// 		outputs: { out: 1 }
+	// 	},
+	// 	{
+	// 		inputs: { x: 1, y: 1 },
+	// 		outputs: { out: 0 }
+	// 	},
+	// ], 10000, 0.5)
+	//
+	// logger.log('00: ', ai.Test({ x: 0, y: 0 })['out'])
+	// logger.log('01: ', ai.Test({ x: 0, y: 1 })['out'])
+	// logger.log('10: ', ai.Test({ x: 1, y: 0 })['out'])
+	// logger.log('11: ', ai.Test({ x: 1, y: 1 })['out'])
+	//
+	// logger.log(ai.GetInputValues({ x: 1, y: 0 }))
+	// logger.log(ai.GetInputVariants([0, 1]))
+	// logger.log(ai.GetOutputVariants([1]))
+	// logger.log(ai.InputKeys)
 }
 
 // Old way of controlling a neural network
