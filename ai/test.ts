@@ -2,7 +2,7 @@
 import { NeuralNetwork } from "./neuralNetwork.ts";
 import { AAIDef, CIODef } from "./index.ts";
 
-import { Logger } from "../../logging/index.ts";
+import { Logger } from "../logging/index.ts";
 
 // @ts-ignore
 // The error was that AAIDef<AIXOR> is a circular ref
