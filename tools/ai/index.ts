@@ -70,25 +70,6 @@ export abstract class AAIDef<
 		this.neuralNetwork = new NeuralNetwork([this.InputCount, ...this.HiddenLayers, this.OutputCount])
 	}
 
-	public StartTraining(
-		data: {
-			inputs: number[],
-			targets: number[],
-		}[],
-		cycles: number,
-		rate: number
-	) {
-		const ins: number[][] = []
-		const outs: number[][] = []
-
-		for (const d of data) {
-			ins.push(d.inputs)
-			outs.push(d.targets)
-		}
-
-		this.neuralNetwork.train(ins, outs, cycles, rate)
-	}
-
 	private getIOAsValues<IO extends TI | TO>(typ: 'i' | 'o', io: IO): number[] {
 		const out: number[] = []
 		const ioDef = typ == 'i' ? this.Inputs : this.Outputs

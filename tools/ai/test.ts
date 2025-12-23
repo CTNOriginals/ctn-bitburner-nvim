@@ -1,7 +1,6 @@
 // Source: https://github.com/CTNOriginals/CTN-Bitburner/blob/main/src/ai/neuralNetwork.ts
-import { Layer, NeuralNetwork } from "./neuralNetwork.ts";
-import { MSE, ReLU, ReLUDeriv, Sigmoid, SigmoidDeriv } from "./functions.ts";
-import { AAIDef, CIODef, ExtractVariants, IOToVariants } from "./index.ts";
+import { NeuralNetwork } from "./neuralNetwork.ts";
+import { AAIDef, CIODef } from "./index.ts";
 
 import { Logger } from "../../logging/index.ts";
 
