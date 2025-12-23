@@ -31,7 +31,7 @@ class AIXOR extends AAIDef<AIXOR> {
 }
 
 let logger: Logger
-let thisNS
+let thisNS: NS
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL');
@@ -75,6 +75,8 @@ export async function main(ns: NS) {
 	logger.log(ai.inputKeys)
 }
 
+// Old way of controlling a neural network
+// without the abstract AI definitions
 function xorSolver(ns: NS) {
 	const nn = new NeuralNetwork([2, 4, 4, 1]);
 	const inputs = [[0, 0], [0, 1], [1, 0], [1, 1]];
