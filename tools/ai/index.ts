@@ -40,34 +40,34 @@ export class CIODef<T = string | number> {
 
 export abstract class AAIDef<
 	TInst extends AAIDef<never>,
-	TI = IOToVariants<TInst['inputs']>,
-	TO = IOToVariants<TInst['outputs']>
+	TI = IOToVariants<TInst['Inputs']>,
+	TO = IOToVariants<TInst['Outputs']>
 > {
-	public abstract inputs: TIO
-	public abstract outputs: TIO
+	public abstract Inputs: TIO
+	public abstract Outputs: TIO
 
-	public abstract hiddenLayers: number[]
+	public abstract HiddenLayers: number[]
 
 	protected neuralNetwork: NeuralNetwork
 
 	constructor() { }
 
-	public get inputKeys(): (keyof TInst['inputs'])[] {
-		return Object.keys(this.inputs)
+	public get InputKeys(): (keyof TInst['Inputs'])[] {
+		return Object.keys(this.Inputs)
 	}
-	public get outputKeys(): (keyof TInst['outputs'])[] {
-		return Object.keys(this.outputs)
+	public get OutputKeys(): (keyof TInst['Outputs'])[] {
+		return Object.keys(this.Outputs)
 	}
 
-	public get inputCount(): number {
-		return this.inputKeys.length
+	public get InputCount(): number {
+		return this.InputKeys.length
 	}
-	public get outputCount(): number {
-		return this.outputKeys.length
+	public get OutputCount(): number {
+		return this.OutputKeys.length
 	}
 
 	protected createNeuralNetwork() {
-		this.neuralNetwork = new NeuralNetwork([this.inputCount, ...this.hiddenLayers, this.outputCount])
+		this.neuralNetwork = new NeuralNetwork([this.InputCount, ...this.HiddenLayers, this.OutputCount])
 	}
 
 	public StartTraining(
@@ -91,7 +91,7 @@ export abstract class AAIDef<
 
 	private getIOAsValues<IO extends TI | TO>(typ: 'i' | 'o', io: IO): number[] {
 		const out: number[] = []
-		const ioDef = typ == 'i' ? this.inputs : this.outputs
+		const ioDef = typ == 'i' ? this.Inputs : this.Outputs
 
 		for (const key in io) {
 			const variant = io[key]
@@ -102,7 +102,7 @@ export abstract class AAIDef<
 	}
 	private getIOAsVariants<IO extends TI | TO>(typ: 'i' | 'o', io: number[]): IO {
 		const out = {} as IO
-		const ioDef = typ == 'i' ? this.inputs : this.outputs
+		const ioDef = typ == 'i' ? this.Inputs : this.Outputs
 		const keys = Object.keys(ioDef)
 
 		for (let i = 0; i < io.length; i++) {
@@ -146,13 +146,13 @@ export abstract class AAIDef<
 	}
 
 	public Test(inputs: TI): TO {
-		const keys = Object.keys(this.outputs) as (keyof typeof this.outputs)[]
+		const keys = Object.keys(this.Outputs) as (keyof typeof this.Outputs)[]
 
 		const ins: number[] = []
 		let results = {} as TO
 
 		for (const key in inputs) {
-			const def = this.inputs[key]
+			const def = this.Inputs[key]
 			const variant = inputs[key]
 			ins.push(def.GetValueFromVarient(variant as string))
 		}
@@ -160,8 +160,8 @@ export abstract class AAIDef<
 		const outs: number[] = this.neuralNetwork.forward(ins)
 
 		for (let i = 0; i < outs.length; i++) {
-			const key: keyof typeof this.outputs = keys[i]
-			const def = this.outputs[key]
+			const key: keyof typeof this.Outputs = keys[i]
+			const def = this.Outputs[key]
 			results[key] = def.GetVarientFromValue(outs[i])
 		}
 

@@ -14,15 +14,15 @@ import { Logger } from "../../logging/index.ts";
 class AIXOR extends AAIDef<AIXOR> {
 	private io = CIODef.define(0, 1)
 
-	public inputs = {
+	public Inputs = {
 		x: this.io,
 		y: this.io,
 	} as const
-	public outputs = {
+	public Outputs = {
 		out: this.io,
 	} as const
 
-	protected hiddenLayers: number[] = [3, 5, 3]
+	protected HiddenLayers: number[] = [3, 5, 3]
 
 	constructor() {
 		super()
@@ -43,8 +43,8 @@ export async function main(ns: NS) {
 
 	const ai = new AIXOR()
 
-	logger.log(ai.inputs)
-	logger.log(ai.outputs)
+	logger.log(ai.Inputs)
+	logger.log(ai.Outputs)
 	ai.Train([
 		{
 			inputs: { x: 0, y: 0 },
@@ -72,7 +72,7 @@ export async function main(ns: NS) {
 	logger.log(ai.GetInputValues({ x: 1, y: 0 }))
 	logger.log(ai.GetInputVariants([0, 1]))
 	logger.log(ai.GetOutputVariants([1]))
-	logger.log(ai.inputKeys)
+	logger.log(ai.InputKeys)
 }
 
 // Old way of controlling a neural network
