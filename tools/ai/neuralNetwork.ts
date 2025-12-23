@@ -113,7 +113,7 @@ export class NeuralNetwork {
 				this.backward(targets[i], learningRate);
 				totalLoss += MSE(output, targets[i]);
 			}
-			if (epoch % 100 === 0) {
+			if (epoch % (epochs * 0.1) === 0) {
 				console.log(`Epoch ${epoch}, Average Loss: ${totalLoss / inputs.length}`);
 			}
 		}
