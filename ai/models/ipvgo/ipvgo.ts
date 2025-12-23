@@ -1,14 +1,8 @@
 import { AAIDef, CIODef } from "../../definition.ts";
-
-const NodeState = {
-	empty: '.',
-	black: 'X',
-	white: 'O',
-	static: '#',
-} as const
+import * as Data from './data.ts'
 
 // Node Input, very short name because it has to be written atleast 25x
-const ni = CIODef.define(...Object.values(NodeState))
+const ni = CIODef.define(...Object.values(Data.NodeState))
 const position = CIODef.define(
 	0, 1, 2, 3, 4,
 	5, 6, 7, 8, 9,
