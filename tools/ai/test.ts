@@ -4,7 +4,6 @@ import { AAIDef, CIODef } from "./index.ts";
 
 import { Logger } from "../../logging/index.ts";
 
-
 // @ts-ignore
 // The error was that AAIDef<AIXOR> is a circular ref
 // which is true and is bad, but it doesnt actually break
@@ -61,7 +60,7 @@ export async function main(ns: NS) {
 			inputs: { x: 1, y: 1 },
 			outputs: { out: 0 }
 		},
-	], 10000, 0.1)
+	], 10000, 0.5)
 
 	logger.log('00: ', ai.Test({ x: 0, y: 0 })['out'])
 	logger.log('01: ', ai.Test({ x: 0, y: 1 })['out'])
