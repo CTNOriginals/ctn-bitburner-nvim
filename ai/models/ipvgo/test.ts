@@ -1,5 +1,5 @@
 import { Logger } from '../../../logging/index.ts'
-import { GameMaster } from './player.ts'
+import { GameMaster } from './gameMaster.ts'
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
