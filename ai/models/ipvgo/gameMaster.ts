@@ -7,36 +7,57 @@ export class GameMaster {
 
 	private logger: Logger
 
-	constructor(private ns: NS) {
+	constructor(
+		private ns: NS,
+		public BoardSize: Data.BoardSize = 5
+	) {
 		this.logger = new Logger(ns)
 	}
 
+	private get go() {
+		return this.ns.go
+	}
+	public get BoardState(): Data.BoardState {
+		return this.BoardHistory[this.BoardHistory.length - 1]
+	}
+
+
+	public Reset() {
+		this.go.resetBoardState('No AI', this.BoardSize)
+		this.BoardHistory = [this.go.getBoardState() as Data.BoardState]
+	}
+
 	public async Start(): Promise<void> {
-		this.BoardHistory = []
-		this.BoardHistory.push(this.ns.go.resetBoardState('No AI', 5) as unknown as Data.BoardState)
+		this.Reset()
+		const black = new GoPlayer(this.ns, 'black', this)
+		const white = new GoPlayer(this.ns, 'white', this)
 
-		const p1 = new GoPlayer(this.ns, 'black', this)
-		const p2 = new GoPlayer(this.ns, 'white', this)
-
-		let move: Data.PlayerMoveState = { type: 'pass', x: null, y: null }
-
-		while (true) {
+		while (this.go.getCurrentPlayer() !== 'None') {
 			await this.ns.sleep(1)
+			const turn = this.go.getCurrentPlayer()
+
+			const player = turn == 'Black' ? black : white
+			const isWhite = turn == 'White'
+
+			await this.go.opponentNextTurn(false, isWhite)
+
+			const move: ReturnType<typeof player.GetRandomMove> = player.GetRandomMove()
+
+			if (move == null) {
+				this.go.passTurn(isWhite)
+				continue
+			}
+
+			this.go.makeMove(move.x, move.y, isWhite)
 		}
 
 		this.logger.log('Game ended')
 	}
 
 
-	public get BoardState(): Data.BoardState {
-		return this.BoardHistory[this.BoardHistory.length - 1]
-	}
-	public get BoardSize(): number {
-		return this.BoardState[0].length
-	}
 
 	// public CountStones(): {[key: Data.Stones]: number} {
-	public CountStones(board: Data.BoardState = this.BoardState): { black: number, white: number } {
+	public CountStones(board: Data.BoardState = this.BoardState): Record<Data.KStone, number> {
 		const count = { black: 0, white: 0 }
 
 		for (const row of board) {
@@ -51,7 +72,7 @@ export class GameMaster {
 	}
 
 	public SumPlayerLiberties(board: Data.BoardState = this.BoardState) {
-		const liberties = this.ns.go.analysis.getLiberties(this.BoardState as unknown as string[])
+		const liberties = this.go.analysis.getLiberties(this.BoardState)
 		let total = 0
 
 		for (let x = 0; x < board.length; x++) {

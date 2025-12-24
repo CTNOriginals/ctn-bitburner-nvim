@@ -4,21 +4,29 @@ export const NodeState = {
 	white: 'O',
 	static: '#',
 } as const
-
 export type KNodeState = keyof typeof NodeState
 export type VNodeState = typeof NodeState[KNodeState]
 export const NodeStateKeys: KNodeState[] = Object.keys(NodeState) as KNodeState[]
 export const NodeStateValues: VNodeState[] = Object.keys(NodeState) as VNodeState[]
 
+export const PlayerType = {
+	ai: 'ai',
+	npc: 'npc',
+} as const
+export type KPlayerType = keyof typeof PlayerType
+
 export type Stones = Pick<typeof NodeState, 'black' | 'white'>
 export type VStone = typeof NodeState['black' | 'white']
 export type KStone = Extract<KNodeState, 'black' | 'white'>
 
+export type BoardState = VNodeState[]
+export type BoardSize = 5 | 7 | 9 | 13
+
+export type Position = { x: number, y: number }
+
 export function GetStateNameFromValue(val: VNodeState): KNodeState {
 	return NodeStateKeys[NodeStateValues.indexOf(val)]
 }
-
-export type BoardState = VNodeState[][]
 
 export interface PlayerMoveState {
 	type: "move" | "pass" | "gameOver";

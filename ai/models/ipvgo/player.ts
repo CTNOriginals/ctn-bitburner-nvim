@@ -7,29 +7,30 @@ export class GoPlayer {
 		private ns: NS,
 		public Typ: Data.KStone,
 		private gameMaster: GameMaster
-	) {
-
-	}
+	) { }
 
 	public get Opponent(): Data.KStone {
 		return this.Typ == 'black' ? 'white' : 'black'
 	}
 
-	public GetRandomMove(): [number, number] | [] {
-		const valid = this.ns.go.analysis.getValidMoves()
+	public GetRandomMove(): Data.Position | null {
+		const valid = this.ns.go.analysis.getValidMoves(this.Typ === 'white')
 		const coords: [number, number][] = []
 
 		for (let x = 0; x < this.gameMaster.BoardSize; x++) {
 			for (let y = 0; y < this.gameMaster.BoardSize; y++) {
-				if (valid[x][y]) {
+				if (valid[x][y] && this.gameMaster.BoardState[x][y] == Data.NodeState.empty) {
 					coords.push([x, y])
 				}
 			}
 		}
 
-		// this.ns.print(Math.random() * coords.length - 1)
-		// this.ns.print(coords[Math.round(Math.random() * coords.length - 1)])
-		return coords[Math.floor(Math.random() * coords.length)]
+		if (coords.length == 0) {
+			return null
+		}
+
+		const pick = coords[Math.floor(Math.random() * coords.length)]
+		return { x: pick[0], y: pick[1] }
 	}
 
 	public CountStones(board: Data.BoardState = this.gameMaster.BoardState): number {
