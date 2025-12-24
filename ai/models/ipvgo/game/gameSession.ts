@@ -1,6 +1,6 @@
 import { Logger } from '../../../../logging/index.ts'
 import * as Data from '../data.ts'
-import { GoPlayer } from '../player/definition.ts'
+import { AIPlayer } from '../player/aiPlayer.ts'
 
 export class GameSession {
 	public BoardHistory: Data.BoardState[] = []
@@ -29,34 +29,38 @@ export class GameSession {
 
 	public async Start(): Promise<void> {
 		this.Reset()
-		const black = new GoPlayer(this.ns, 'black', this)
-		const white = new GoPlayer(this.ns, 'white', this)
+		const black = new AIPlayer(this.ns, 'black')
+		const white = new AIPlayer(this.ns, 'white')
+
+		black.OnGameStart(this)
+		white.OnGameStart(this)
 
 		while (this.go.getCurrentPlayer() !== 'None') {
 			await this.ns.sleep(1)
 			const turn = this.go.getCurrentPlayer()
 
 			const player = turn == 'Black' ? black : white
-			const isWhite = turn == 'White'
+			// const isWhite = turn == 'White'
 
-			await this.go.opponentNextTurn(false, isWhite)
+			// await this.go.opponentNextTurn(false, isWhite)
+			await player.WaitForMove()
 
-			const move: ReturnType<typeof player.GetRandomMove> = player.GetRandomMove()
+			// const move: ReturnType<typeof player.GetRandomMove> = player.GetRandomMove()
 
-			if (move == null) {
-				this.go.passTurn(isWhite)
-				continue
-			}
+			// if (move == null) {
+			// 	this.go.passTurn(isWhite)
+			// 	continue
+			// }
 
-			this.go.makeMove(move.x, move.y, isWhite)
+			// this.go.makeMove(move.x, move.y, isWhite)
+			player.DoMove()
 		}
 
 		this.logger.log('Game ended')
+		black.OnGameEnd()
+		white.OnGameEnd()
 	}
 
-
-
-	// public CountStones(): {[key: Data.Stones]: number} {
 	public CountStones(board: Data.BoardState = this.BoardState): Record<Data.KStone, number> {
 		const count = { black: 0, white: 0 }
 

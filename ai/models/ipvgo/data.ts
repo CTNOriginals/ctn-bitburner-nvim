@@ -12,6 +12,7 @@ export const NodeStateValues: VNodeState[] = Object.keys(NodeState) as VNodeStat
 export const PlayerType = {
 	ai: 'ai',
 	npc: 'npc',
+	manual: 'manual',
 } as const
 export type KPlayerType = keyof typeof PlayerType
 

@@ -2,24 +2,57 @@ import { Logger } from '../../../../logging/index.ts'
 import * as Data from '.././data.ts'
 import { GameSession } from '../game/gameSession.ts'
 
-export class GoPlayer {
+export abstract class AGoPlayer {
+	protected gameSession: GameSession
+	public IsPlaying: boolean = false
+
 	constructor(
 		private ns: NS,
-		public Typ: Data.KStone,
-		private gameMaster: GameSession
+		public Type: Data.KPlayerType,
+		public StoneType: Data.KStone,
 	) { }
 
+	public abstract DoMove()
+	public abstract WaitForMove(): Promise<void>
+
+	public get go() {
+		return this.ns.go
+	}
+
 	public get Opponent(): Data.KStone {
-		return this.Typ == 'black' ? 'white' : 'black'
+		return this.StoneType == 'black' ? 'white' : 'black'
+	}
+
+	private get isWhite(): boolean {
+		return this.StoneType == 'white'
+	}
+
+	protected move(pos: Data.Position) {
+		// TODO: add error handling
+		this.go.makeMove(pos.x, pos.y, this.isWhite)
+	}
+	protected pass() {
+		this.go.passTurn(this.isWhite)
+	}
+	protected wait(): ReturnType<typeof this.go.opponentNextTurn> {
+		return this.go.opponentNextTurn(false, this.isWhite)
+	}
+
+	public OnGameStart(session: GameSession) {
+		this.gameSession = session
+		this.IsPlaying = true
+	}
+	public OnGameEnd() {
+		this.IsPlaying = false
 	}
 
 	public GetRandomMove(): Data.Position | null {
-		const valid = this.ns.go.analysis.getValidMoves(this.Typ === 'white')
+		const valid = this.ns.go.analysis.getValidMoves(this.StoneType === 'white')
 		const coords: [number, number][] = []
 
-		for (let x = 0; x < this.gameMaster.BoardSize; x++) {
-			for (let y = 0; y < this.gameMaster.BoardSize; y++) {
-				if (valid[x][y] && this.gameMaster.BoardState[x][y] == Data.NodeState.empty) {
+		for (let x = 0; x < this.gameSession.BoardSize; x++) {
+			for (let y = 0; y < this.gameSession.BoardSize; y++) {
+				if (valid[x][y] && this.gameSession.BoardState[x][y] == Data.NodeState.empty) {
 					coords.push([x, y])
 				}
 			}
@@ -33,18 +66,18 @@ export class GoPlayer {
 		return { x: pick[0], y: pick[1] }
 	}
 
-	public CountStones(board: Data.BoardState = this.gameMaster.BoardState): number {
-		return this.gameMaster.CountStones(board)[this.Typ]
+	public CountStones(board: Data.BoardState = this.gameSession.BoardState): number {
+		return this.gameSession.CountStones(board)[this.StoneType]
 	}
 
 	public CalculateMoveReward() {
-		const boardBefore = this.gameMaster.BoardHistory[this.gameMaster.BoardHistory.length - 2]
-		const boardAfter = this.gameMaster.BoardHistory[this.gameMaster.BoardHistory.length - 1]
+		const boardBefore = this.gameSession.BoardHistory[this.gameSession.BoardHistory.length - 2]
+		const boardAfter = this.gameSession.BoardHistory[this.gameSession.BoardHistory.length - 1]
 		let reward = 0
 
 		// 1. CAPTURED STONES (easiest - just count pieces)
-		const stonesBefore = this.gameMaster.CountStones(boardBefore)
-		const stonesAfter = this.gameMaster.CountStones(boardAfter)
+		const stonesBefore = this.gameSession.CountStones(boardBefore)
+		const stonesAfter = this.gameSession.CountStones(boardAfter)
 		const capturedStones = stonesBefore[this.Opponent] - stonesAfter[this.Opponent]
 		reward += capturedStones * 10
 
@@ -56,8 +89,8 @@ export class GoPlayer {
 		reward += territoryClaimed * 2
 
 		// 3. LIBERTIES (sum them from the API)
-		const libertiesBefore = this.gameMaster.SumPlayerLiberties(boardBefore)
-		const libertiesAfter = this.gameMaster.SumPlayerLiberties(boardAfter)
+		const libertiesBefore = this.gameSession.SumPlayerLiberties(boardBefore)
+		const libertiesAfter = this.gameSession.SumPlayerLiberties(boardAfter)
 		const libertyChange = libertiesAfter - libertiesBefore
 		reward += libertyChange * 0.5
 
