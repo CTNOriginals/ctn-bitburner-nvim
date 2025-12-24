@@ -15,9 +15,9 @@ export function getAllImportPaths(ns: NS, path: string, maxLines = -1, history: 
 		const match = new RegExp(ScriptImportLine).exec(line) as RegExpExecArray;
 		let importPath = match?.groups?.path ?? null;
 
-		if (match == null || importPath == null || pathList.includes(importPath) || history.includes(importPath)) continue;
-
+		if (match == null || importPath == null) continue;
 		importPath = resolvePath(path, importPath)
+		if (pathList.includes(importPath) || history.includes(importPath)) continue;
 
 		pathList.push(importPath);
 		history.push(...pathList);
