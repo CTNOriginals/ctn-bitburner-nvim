@@ -19,7 +19,9 @@ async function PlaySession(ns: NS) {
 
 	// go.resetBoardState('No AI', 5)
 	// go.analysis.setTestingBoardState(['.....', '.....', '.....', '.....', '.....',], 1.5)
-	go.resetBoardState('Netburners', 5)
+	// go.resetBoardState('Netburners', 5)
+	go.resetBoardState('Daedalus', 5)
+	// go.resetBoardState('Illuminati', 5)
 
 	while (true) {
 		await ns.sleep(1)

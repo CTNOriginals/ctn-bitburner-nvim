@@ -11,6 +11,7 @@ declare global {
 	type ScriptArg = NSD.ScriptArg
 	type FileMetadata = NSD.FileMetadata
 	type SpawnOptions = NSD.SpawnOptions
+	type Server = NSD.Server
 
 	type Logger = _Logger
 

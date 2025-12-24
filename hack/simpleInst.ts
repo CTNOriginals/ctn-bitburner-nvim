@@ -7,11 +7,13 @@ export async function main(ns: NS) {
 		return
 	}
 
+	const print = ns.print
+
 	while (true) {
-		ns.print(`Weaken: ${await ns.weaken(host)}`)
-		ns.print(`Grow: ${await ns.grow(host)}`)
-		ns.print(`Weaken: ${await ns.weaken(host)}`)
-		ns.print(`Hack: ${await ns.hack(host)}`)
+		print(`Weaken: ${ns.format.number(await ns.weaken(host))}\t ${host}`)
+		print(`Grow:   ${ns.format.number(await ns.grow(host))}\t ${host}`)
+		print(`Weaken: ${ns.format.number(await ns.weaken(host))}\t ${host}`)
+		print(`Hack:   ${ns.format.number(await ns.hack(host))}\t ${host}`)
 
 		ns.print(' ')
 	}
