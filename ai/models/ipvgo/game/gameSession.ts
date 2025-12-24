@@ -1,6 +1,8 @@
 import { Logger } from '../../../../logging/index.ts'
 import * as Data from '../data.ts'
 import { AIPlayer } from '../player/aiPlayer.ts'
+import { AGoPlayer } from '../player/definition.ts'
+import { NPCPlayer } from '../player/npcPlayer.ts'
 
 export class GameSession {
 	public BoardHistory: Data.BoardState[] = []
@@ -9,7 +11,9 @@ export class GameSession {
 
 	constructor(
 		private ns: NS,
-		public BoardSize: Data.BoardSize = 5
+		public BoardSize: Data.BoardSize = 5,
+		public Player1: Exclude<AGoPlayer, NPCPlayer>,
+		public Player2: AGoPlayer,
 	) {
 		this.logger = new Logger(ns)
 	}
@@ -20,20 +24,32 @@ export class GameSession {
 	public get BoardState(): Data.BoardState {
 		return this.BoardHistory[this.BoardHistory.length - 1]
 	}
+	// public PlayersDo<M extends MethodsOf<AGoPlayer>>(method: MethodsOf<AGoPlayer>, ...params: MethodParams<AGoPlayer, M>) {
+	public PlayersDo<M extends MethodsOf<AGoPlayer>>(method: MethodsOf<AGoPlayer>) {
+		this.Player1[method]
+		this.Player2[method]
+	}
 
+	public GoOpponentName(): GoOpponent {
+		if (this.Player2.Type == 'npc') {
+			return (this.Player2 as NPCPlayer).Name
+		}
+
+		return 'No AI'
+	}
 
 	public Reset() {
-		this.go.resetBoardState('No AI', this.BoardSize)
+		this.go.resetBoardState(this.GoOpponentName(), this.BoardSize)
 		this.BoardHistory = [this.go.getBoardState() as Data.BoardState]
 	}
 
 	public async Start(): Promise<void> {
 		this.Reset()
-		const black = new AIPlayer(this.ns, 'black')
-		const white = new AIPlayer(this.ns, 'white')
+		const black = this.Player1
+		const white = this.Player2
 
-		black.OnGameStart(this)
-		white.OnGameStart(this)
+		black.OnGameStart(this, 'black')
+		white.OnGameStart(this, 'white')
 
 		while (this.go.getCurrentPlayer() !== 'None') {
 			await this.ns.sleep(1)
@@ -43,7 +59,7 @@ export class GameSession {
 			// const isWhite = turn == 'White'
 
 			// await this.go.opponentNextTurn(false, isWhite)
-			await player.WaitForMove()
+			await player.Wait()
 
 			// const move: ReturnType<typeof player.GetRandomMove> = player.GetRandomMove()
 
@@ -53,12 +69,13 @@ export class GameSession {
 			// }
 
 			// this.go.makeMove(move.x, move.y, isWhite)
-			player.DoMove()
+			player.Move()
 		}
 
 		this.logger.log('Game ended')
-		black.OnGameEnd()
-		white.OnGameEnd()
+		// black.OnGameEnd()
+		// white.OnGameEnd()
+		this.PlayersDo('OnGameEnd')
 	}
 
 	public CountStones(board: Data.BoardState = this.BoardState): Record<Data.KStone, number> {

@@ -6,40 +6,47 @@ export abstract class AGoPlayer {
 	protected gameSession: GameSession
 	public IsPlaying: boolean = false
 
+	private color: Data.KStone
+
 	constructor(
 		private ns: NS,
 		public Type: Data.KPlayerType,
-		public StoneType: Data.KStone,
-	) { }
-
-	public abstract DoMove()
-	public abstract WaitForMove(): Promise<void>
+	) {
+		if (this.Type == 'manual') {
+			this.color = 'black'
+		} else if (this.Type == 'npc') {
+			this.color = 'black'
+		}
+	}
 
 	public get go() {
 		return this.ns.go
 	}
-
-	public get Opponent(): Data.KStone {
-		return this.StoneType == 'black' ? 'white' : 'black'
-	}
-
 	private get isWhite(): boolean {
-		return this.StoneType == 'white'
+		return this.color == 'white'
+	}
+	public get OpponentColor(): Data.KStone {
+		return this.isWhite ? 'white' : 'black'
 	}
 
-	protected move(pos: Data.Position) {
+	public Move(pos?: Data.Position) {
+		if (!pos) {
+			return
+		}
+
 		// TODO: add error handling
 		this.go.makeMove(pos.x, pos.y, this.isWhite)
 	}
-	protected pass() {
+	public Pass() {
 		this.go.passTurn(this.isWhite)
 	}
-	protected wait(): ReturnType<typeof this.go.opponentNextTurn> {
+	public Wait(): ReturnType<typeof this.go.opponentNextTurn> {
 		return this.go.opponentNextTurn(false, this.isWhite)
 	}
 
-	public OnGameStart(session: GameSession) {
+	public OnGameStart(session: GameSession, color: Data.KStone = this.color) {
 		this.gameSession = session
+		this.color = color
 		this.IsPlaying = true
 	}
 	public OnGameEnd() {
@@ -47,7 +54,7 @@ export abstract class AGoPlayer {
 	}
 
 	public GetRandomMove(): Data.Position | null {
-		const valid = this.ns.go.analysis.getValidMoves(this.StoneType === 'white')
+		const valid = this.ns.go.analysis.getValidMoves(this.color === 'white')
 		const coords: [number, number][] = []
 
 		for (let x = 0; x < this.gameSession.BoardSize; x++) {
@@ -67,7 +74,7 @@ export abstract class AGoPlayer {
 	}
 
 	public CountStones(board: Data.BoardState = this.gameSession.BoardState): number {
-		return this.gameSession.CountStones(board)[this.StoneType]
+		return this.gameSession.CountStones(board)[this.color]
 	}
 
 	public CalculateMoveReward() {
@@ -78,7 +85,7 @@ export abstract class AGoPlayer {
 		// 1. CAPTURED STONES (easiest - just count pieces)
 		const stonesBefore = this.gameSession.CountStones(boardBefore)
 		const stonesAfter = this.gameSession.CountStones(boardAfter)
-		const capturedStones = stonesBefore[this.Opponent] - stonesAfter[this.Opponent]
+		const capturedStones = stonesBefore[this.OpponentColor] - stonesAfter[this.OpponentColor]
 		reward += capturedStones * 10
 
 		// 2. TERRITORY CLAIMED (built-in API!)
@@ -95,7 +102,7 @@ export abstract class AGoPlayer {
 		reward += libertyChange * 0.5
 
 		// 4. GOT CAPTURED (check if we lost stones)
-		const ourLostStones = stonesBefore[this.Opponent] - stonesAfter[this.Opponent]
+		const ourLostStones = stonesBefore[this.OpponentColor] - stonesAfter[this.OpponentColor]
 		reward += ourLostStones * -15
 
 		return reward

@@ -2,22 +2,18 @@ import { AGoPlayer } from "./definition.ts";
 import * as Data from '.././data.ts'
 
 export class AIPlayer extends AGoPlayer {
-	constructor(ns: NS, stoneType: Data.KStone) {
-		super(ns, 'ai', stoneType)
+	constructor(ns: NS) {
+		super(ns, 'ai')
 	}
 
-	public DoMove() {
+	public Move() {
 		const pos = this.GetRandomMove()
 
 		if (!pos) {
-			this.pass()
+			this.Pass()
 			return
 		}
 
-		this.move(pos)
-	}
-
-	public async WaitForMove(): Promise<void> {
-		await this.wait()
+		super.Move(pos)
 	}
 }
