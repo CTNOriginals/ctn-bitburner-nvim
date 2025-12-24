@@ -2,7 +2,7 @@ import { Logger } from '../../../logging/index.ts'
 import * as Data from './data.ts'
 import { GoPlayer } from './player.ts'
 
-export class GameMaster {
+export class GameSession {
 	public BoardHistory: Data.BoardState[] = []
 
 	private logger: Logger

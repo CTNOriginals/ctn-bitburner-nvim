@@ -1,12 +1,12 @@
 import { Logger } from '../../../logging/index.ts'
 import * as Data from './data.ts'
-import { GameMaster } from './gameMaster.ts'
+import { GameSession } from './gameSession.ts'
 
 export class GoPlayer {
 	constructor(
 		private ns: NS,
 		public Typ: Data.KStone,
-		private gameMaster: GameMaster
+		private gameMaster: GameSession
 	) { }
 
 	public get Opponent(): Data.KStone {
@@ -67,5 +67,6 @@ export class GoPlayer {
 
 		return reward
 	}
-
 }
+
+
