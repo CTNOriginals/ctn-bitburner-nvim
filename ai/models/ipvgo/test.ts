@@ -1,5 +1,5 @@
 import { Logger } from '../../../logging/index.ts'
-import { GameSession } from './gameSession.ts'
+import { GameSession } from './game/gameSession.ts'
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL')

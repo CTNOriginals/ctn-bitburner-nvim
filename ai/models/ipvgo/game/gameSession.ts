@@ -1,6 +1,6 @@
-import { Logger } from '../../../logging/index.ts'
-import * as Data from './data.ts'
-import { GoPlayer } from './player.ts'
+import { Logger } from '../../../../logging/index.ts'
+import * as Data from '../data.ts'
+import { GoPlayer } from '../player/definition.ts'
 
 export class GameSession {
 	public BoardHistory: Data.BoardState[] = []

@@ -1,6 +1,6 @@
-import { Logger } from '../../../logging/index.ts'
-import * as Data from './data.ts'
-import { GameSession } from './gameSession.ts'
+import { Logger } from '../../../../logging/index.ts'
+import * as Data from '.././data.ts'
+import { GameSession } from '../game/gameSession.ts'
 
 export class GoPlayer {
 	constructor(
