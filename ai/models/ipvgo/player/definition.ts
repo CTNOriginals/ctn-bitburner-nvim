@@ -6,30 +6,38 @@ export abstract class AGoPlayer {
 	protected gameSession: GameSession
 	public IsPlaying: boolean = false
 
-	private color: Data.KStone
+	protected color: Data.KStone
+
+	private logger: Logger
 
 	constructor(
 		private ns: NS,
 		public Type: Data.KPlayerType,
 	) {
+		this.logger = new Logger(ns)
+
 		if (this.Type == 'manual') {
 			this.color = 'black'
 		} else if (this.Type == 'npc') {
-			this.color = 'black'
+			this.color = 'white'
 		}
 	}
 
 	public get go() {
 		return this.ns.go
 	}
+	public get log() {
+		return this.logger.log
+	}
 	private get isWhite(): boolean {
 		return this.color == 'white'
 	}
 	public get OpponentColor(): Data.KStone {
-		return this.isWhite ? 'white' : 'black'
+		return this.isWhite ? 'black' : 'white'
 	}
 
 	public Move(pos?: Data.Position) {
+		// this.log(`Move: ${this.color}`)
 		if (!pos) {
 			return
 		}
@@ -40,13 +48,16 @@ export abstract class AGoPlayer {
 	public Pass() {
 		this.go.passTurn(this.isWhite)
 	}
-	public Wait(): ReturnType<typeof this.go.opponentNextTurn> {
+	public Wait(): Promise<any> {
+		// this.log(`Wait: ${this.color}`)
 		return this.go.opponentNextTurn(false, this.isWhite)
 	}
 
-	public OnGameStart(session: GameSession, color: Data.KStone = this.color) {
+	public OnGameStart(session: GameSession, color: Data.KStone) {
 		this.gameSession = session
-		this.color = color
+		if (this.Type == 'ai') {
+			this.color = color
+		}
 		this.IsPlaying = true
 	}
 	public OnGameEnd() {

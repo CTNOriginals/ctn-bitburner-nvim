@@ -6,7 +6,7 @@ export class AIPlayer extends AGoPlayer {
 		super(ns, 'ai')
 	}
 
-	public Move() {
+	public override Move() {
 		const pos = this.GetRandomMove()
 
 		if (!pos) {
@@ -15,5 +15,14 @@ export class AIPlayer extends AGoPlayer {
 		}
 
 		super.Move(pos)
+	}
+
+	public override GetRandomMove(): Data.Position | null {
+		const count = this.gameSession.CountStones()
+		if (count[this.OpponentColor] < 2 && count[this.color] > 1) {
+			return null
+		}
+
+		return super.GetRandomMove()
 	}
 }

@@ -21,6 +21,9 @@ export class GameSession {
 	private get go() {
 		return this.ns.go
 	}
+	private get log() {
+		return this.logger.log
+	}
 	public get BoardState(): Data.BoardState {
 		return this.BoardHistory[this.BoardHistory.length - 1]
 	}
@@ -52,24 +55,19 @@ export class GameSession {
 		white.OnGameStart(this, 'white')
 
 		while (this.go.getCurrentPlayer() !== 'None') {
-			await this.ns.sleep(1)
+			await this.ns.asleep(10)
 			const turn = this.go.getCurrentPlayer()
 
 			const player = turn == 'Black' ? black : white
-			// const isWhite = turn == 'White'
 
-			// await this.go.opponentNextTurn(false, isWhite)
-			await player.Wait()
-
-			// const move: ReturnType<typeof player.GetRandomMove> = player.GetRandomMove()
-
-			// if (move == null) {
-			// 	this.go.passTurn(isWhite)
-			// 	continue
-			// }
-
-			// this.go.makeMove(move.x, move.y, isWhite)
 			player.Move()
+
+			if (player.Type !== 'ai') {
+				await player.Wait()
+			}
+
+			this.BoardHistory.push(this.go.getBoardState() as Data.BoardState)
+			this.log(`${turn} (${player.Type}):\t${player.CalculateMoveReward()}`)
 		}
 
 		this.logger.log('Game ended')
@@ -83,8 +81,10 @@ export class GameSession {
 
 		for (const row of board) {
 			for (const node of row) {
-				if (node == Data.NodeState.black || node == Data.NodeState.white) {
-					count[node]++
+				if (node == Data.NodeState.black) {
+					count.black++
+				} else if (node == Data.NodeState.white) {
+					count.white++
 				}
 			}
 		}
