@@ -96,27 +96,25 @@ export abstract class AGoPlayer {
 		// 1. CAPTURED STONES (easiest - just count pieces)
 		const stonesBefore = this.gameSession.CountStones(boardBefore)
 		const stonesAfter = this.gameSession.CountStones(boardAfter)
-		const capturedStones = stonesBefore[this.OpponentColor] - stonesAfter[this.OpponentColor]
-		reward += capturedStones * 10
+		const captured = stonesBefore[this.OpponentColor] - stonesAfter[this.OpponentColor]
+		reward += captured
+		this.log(`Captre:\t ${captured}`)
 
 		// 2. TERRITORY CLAIMED (built-in API!)
-		const territoryBefore = this.CountStones(this.ns.go.analysis.getControlledEmptyNodes() as unknown as Data.BoardState)
-		// Make the move happens here in your actual code
-		const territoryAfter = this.CountStones(this.ns.go.analysis.getControlledEmptyNodes() as unknown as Data.BoardState)
-		const territoryClaimed = territoryAfter - territoryBefore
-		reward += territoryClaimed * 2
+		const territoryBefore = this.CountStones(this.ns.go.analysis.getControlledEmptyNodes(boardBefore) as Data.BoardState)
+		const territoryAfter = this.CountStones(this.ns.go.analysis.getControlledEmptyNodes(boardAfter) as Data.BoardState)
+		const territory = territoryAfter - territoryBefore
+		reward += territory
+		this.log(`Territ:\t ${territory}`)
 
 		// 3. LIBERTIES (sum them from the API)
-		const libertiesBefore = this.gameSession.SumPlayerLiberties(boardBefore)
-		const libertiesAfter = this.gameSession.SumPlayerLiberties(boardAfter)
-		const libertyChange = libertiesAfter - libertiesBefore
-		reward += libertyChange * 0.5
+		const libertiesBefore = this.gameSession.Liberties(boardBefore)
+		const libertiesAfter = this.gameSession.Liberties(boardAfter)
+		const liberty = libertiesAfter[this.color] - libertiesBefore[this.color]
+		reward += liberty
+		this.log(`Libert:\t ${liberty}`)
 
-		// 4. GOT CAPTURED (check if we lost stones)
-		const ourLostStones = stonesBefore[this.OpponentColor] - stonesAfter[this.OpponentColor]
-		reward += ourLostStones * -15
-
-		return reward
+		return reward / 10
 	}
 }
 

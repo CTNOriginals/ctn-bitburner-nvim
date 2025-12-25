@@ -11,8 +11,8 @@ export async function main(ns: NS) {
 	const p1 = new ManualPlayer(ns)
 	// const p1 = new AIPlayer(ns)
 
-	// const p2 = new AIPlayer(ns)
-	const p2 = new NPCPlayer(ns, 'Netburners')
+	const p2 = new AIPlayer(ns)
+	// const p2 = new NPCPlayer(ns, 'Netburners')
 
 	const master = new GameSession(ns, 5, p1, p2)
 

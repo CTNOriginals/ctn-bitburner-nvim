@@ -12,9 +12,20 @@ declare global {
 	type FileMetadata = NSD.FileMetadata
 	type SpawnOptions = NSD.SpawnOptions
 	type Server = NSD.Server
+	type GoOpponent = NSD.GoOpponent
 
 	type Logger = _Logger
 
 	type ArrayN<T, N extends number> = _types.ReadonlyArrayExactLength<T, N>
+
+	type MethodsOf<T> = {
+		[K in keyof T]: T[K] extends Function ? K : never;
+	}[keyof T];
+
+	type MethodParams<T, M extends MethodsOf<T>> =
+		T[M] extends (...args: infer P) => any ? P : never;
+
+	type MethodReturn<T, M extends MethodsOf<T>> =
+		T[M] extends (...args: any[]) => infer R ? R : never;
 }
 

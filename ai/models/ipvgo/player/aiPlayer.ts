@@ -1,9 +1,12 @@
 import { AGoPlayer } from "./definition.ts";
 import * as Data from '.././data.ts'
+import { GoAI5 } from "../ipvgo.ts";
 
 export class AIPlayer extends AGoPlayer {
+	private ai: GoAI5
 	constructor(ns: NS) {
 		super(ns, 'ai')
+		this.ai = new GoAI5()
 	}
 
 	public override Move() {

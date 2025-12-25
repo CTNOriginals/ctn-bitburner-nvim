@@ -35,4 +35,8 @@ export class GoAI5 extends AAIDef<GoAI5> {
 		super()
 		super.createNeuralNetwork()
 	}
+
+	// public GetInputFromBoard(board: Data.BoardState): typeof this.Inputs {
+	//
+	// }
 }

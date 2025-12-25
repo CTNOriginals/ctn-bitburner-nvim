@@ -7,16 +7,16 @@ export class ManualPlayer extends AGoPlayer {
 	}
 
 	public override async Wait(): Promise<any> {
-		const prev = this.go.getGameState().previousMove
+		// const prev = this.go.getGameState().previousMove
 
-		await new Promise((res) => {
-			setInterval(() => {
-				if (this.go.getCurrentPlayer() != 'Black') {
-					// if (prev !== this.go.getGameState().previousMove) {
-					return res(null)
-				}
-			}, 10)
-		})
+		// await new Promise((res) => {
+		// 	setInterval(() => {
+		// 		if (this.go.getCurrentPlayer() != 'Black') {
+		// 			// if (prev !== this.go.getGameState().previousMove) {
+		// 			return res(null)
+		// 		}
+		// 	}, 10)
+		// })
 
 		return this.go.opponentNextTurn(false, true)
 	}

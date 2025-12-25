@@ -57,6 +57,7 @@ export class GameSession {
 		while (this.go.getCurrentPlayer() !== 'None') {
 			await this.ns.asleep(10)
 			const turn = this.go.getCurrentPlayer()
+			// this.log(this.BoardState.join('\n'))
 
 			const player = turn == 'Black' ? black : white
 
@@ -67,7 +68,10 @@ export class GameSession {
 			}
 
 			this.BoardHistory.push(this.go.getBoardState() as Data.BoardState)
-			this.log(`${turn} (${player.Type}):\t${player.CalculateMoveReward()}`)
+
+			this.log(`\n\n---- ${turn} (${player.Type}) ----`)
+			this.log(`---- ${player.CalculateMoveReward()} ----`)
+			// this.log(this.go.analysis.getLiberties(this.BoardState).join('\n'))
 		}
 
 		this.logger.log('Game ended')
@@ -92,19 +96,21 @@ export class GameSession {
 		return count
 	}
 
-	public SumPlayerLiberties(board: Data.BoardState = this.BoardState) {
+	public Liberties(board: Data.BoardState = this.BoardState): Record<Data.KStone, number> {
 		const liberties = this.go.analysis.getLiberties(this.BoardState)
-		let total = 0
+		const scores: ReturnType<typeof this.Liberties> = { black: 0, white: 0 }
 
 		for (let x = 0; x < board.length; x++) {
 			for (let y = 0; y < board[x].length; y++) {
-				if (board[x][y] === 'X') {
-					total += liberties[x][y]
+				if (board[x][y] == Data.NodeState.black) {
+					scores.black += liberties[x][y]
+				} else if (board[x][y] == Data.NodeState.white) {
+					scores.white += liberties[x][y]
 				}
 			}
 		}
 
-		return total
+		return scores
 	}
 
 }
