@@ -25,14 +25,14 @@ export class GameStats {
 
 	/** Get the total game score of each player */
 	public GetTotal(): TGameScore {
-		let score: TGameScore = { self: 0, opp: 0 }
+		let total: TGameScore = { self: 0, opp: 0 }
 
 		for (const score of this.ScoreHistory) {
-			score.self += score.self
-			score.opp += score.opp
+			total.self += score.self
+			total.opp += score.opp
 		}
 
-		return score
+		return total
 	}
 
 	/** Get the average game score of each player */
@@ -120,23 +120,20 @@ export class GameSession {
 			// this.log(this.go.analysis.getLiberties(this.BoardState).join('\n'))
 		}
 
-		// this.logger.log('Game ended')
-		// black.OnGameEnd()
-		// white.OnGameEnd()
 		this.PlayersDo('OnGameEnd')
 
 		const state = this.go.getGameState()
 		this.Stats.Report(state.blackScore, state.whiteScore)
 
 		if (state.blackScore == state.whiteScore) {
-			this.log(`Tie: ${state.blackScore} / ${state.whiteScore}`)
+			this.log(`${this.Stats.GameCount}:\tTie\t${state.blackScore}`)
 			return
 		}
 
 		const winner = ((state.blackScore > state.whiteScore) ? "black" : "white")
 		const loser = ((state.blackScore > state.whiteScore) ? "white" : "black")
 
-		this.log(`${this.Stats.GameCount}: ${winner} ${state[winner + 'Score']} / ${state[loser + 'Score']} = ${state[winner + 'Score'] - state[loser + 'Score']} (${this.Stats.GetRatio()})`)
+		this.log(`${this.Stats.GameCount}:\t${winner}\t${state.blackScore} / ${state.whiteScore} = ${state[winner + 'Score'] - state[loser + 'Score']} (${Math.round(this.Stats.GetRatio() * 10) / 10})`)
 	}
 
 	public Restart() {

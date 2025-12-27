@@ -52,7 +52,7 @@ export abstract class AGoPlayer {
 	}
 
 	public GetValidMoves() {
-		return this.go.analysis.getValidMoves(undefined, undefined, this.isWhite)
+		return this.go.analysis.getValidMoves(this.isWhite)
 	}
 	public GetValidPositions(): Data.Position[] {
 		const valid = this.GetValidMoves()
@@ -143,15 +143,15 @@ export abstract class AGoPlayer {
 		reward += liberty
 		log(`Libert:\t ${liberty}`)
 
-		const stats = this.go.getGameState()
-		const statScore = (this.isWhite) ? stats.whiteScore : stats.blackScore
-		const oppScore = (!this.isWhite) ? stats.whiteScore : stats.blackScore
-		const scoreDiff = statScore - oppScore
+		// const stats = this.go.getGameState()
+		// const statScore = (this.isWhite) ? stats.whiteScore : stats.blackScore
+		// const oppScore = (!this.isWhite) ? stats.whiteScore : stats.blackScore
+		// const scoreDiff = statScore - oppScore
 		// const scoreRatio = scoreDiff / statScore
 
-		let result = reward
-		result += result * scoreDiff
-		return result
+		// let result = reward
+		// result += result * scoreDiff
+		return reward
 	}
 }
 

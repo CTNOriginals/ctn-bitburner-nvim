@@ -5,7 +5,8 @@ import { GameSession } from "../game/gameSession.ts";
 import { AAIDef } from "../../../definition.ts";
 
 export class AIPlayer extends AGoPlayer {
-	private ai: GoAI5
+	public ai: GoAI5
+	public scoreMult: number = 0.1;
 
 	private config = {
 		allowPass: false
@@ -53,13 +54,19 @@ export class AIPlayer extends AGoPlayer {
 		const rate = valid.length / this.gameSession.BoardSize
 
 		// for (const pos of valid) {
-		// 	// const target: typeof move = { x: pos.x, y: pos.y, action: 'move' }
+		// 	const target: typeof move = { x: pos.x, y: pos.y, action: 'move' }
+		// 	this.ai.Feedback(this.ai.GetOutputValues(target), 0.1)
 		// }
-		this.ai.Feedback(this.ai.GetOutputValues(move), -rate)
+		this.Feedback(move, -1)
 	}
 
 	private getValidMove(): typeof this.ai.TOut {
 		let move = this.getMove()
+
+		if (move.action == 'pass') {
+			return move
+		}
+
 		let pos = this.getPos(move)
 		const valid = this.GetValidMoves()
 
@@ -72,7 +79,7 @@ export class AIPlayer extends AGoPlayer {
 			if (retries >= 100) {
 				const random = this.GetRandomMove()
 				const rng = this.GetRandomMove()
-				// this.log('Max retries reached, picking at random')
+				// this.log(`${this.Color}: Max retries reached`)
 				if (!rng || true) {
 					move = { action: 'pass', x: move.x, y: move.y }
 					// } else {
@@ -92,7 +99,7 @@ export class AIPlayer extends AGoPlayer {
 	public override async Move() {
 		let move = this.getValidMove()
 		let pos = this.getPos(move)
-		let score = -0.5
+		let score = 0
 		// this.log(`Retries: ${retries}`)
 
 		// this.log(inputs)
@@ -100,23 +107,30 @@ export class AIPlayer extends AGoPlayer {
 		this.moveID++
 
 		if (move.action == 'pass') {
+			score -= this.GetValidPositions().length * 0.01
 			// TODO: Give the ai a score based on how many viable
 			// moves it could have made instead of passing
 			super.Pass()
 			// score -= 1
 			// this.ai.Feedback(this.ai.GetOutputValues(move), -1)
 		} else {
+			const before = this.go.getGameState()
 			super.Move(pos)
-			score += this.CalculateMoveReward()
+			const after = this.go.getGameState()
+
+			score += after[this.Color + 'Score'] - before[this.Color + 'Score']
+			score += this.CalculateMoveReward() * 0.001
 		}
 
-		if (move.action == 'pass') {
-			score -= this.GetValidPositions().length
-		}
-
-		this.ai.Feedback(this.ai.GetOutputValues(move), score)
-		// this.log(this.gameSession.BoardHistory.length)
 		// this.log(score)
+		this.Feedback(move, (score > 0.1) ? 0 : score)
+
+		// this.log(score)
+		// this.log('\n\n')
+	}
+
+	public Feedback(move: typeof this.ai.TOut, score) {
+		this.ai.Feedback(this.ai.GetOutputValues(move), score * this.scoreMult)
 	}
 
 	public override GetRandomMove(): Data.Position | null {

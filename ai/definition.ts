@@ -75,8 +75,12 @@ export abstract class AAIDef<
 		return this.OutputKeys.length
 	}
 
+	public GetNeuralNetwork(): NeuralNetwork {
+		return new NeuralNetwork([this.InputCount, ...this.HiddenLayers, this.OutputCount])
+	}
+
 	protected createNeuralNetwork() {
-		this.neuralNetwork = new NeuralNetwork([this.InputCount, ...this.HiddenLayers, this.OutputCount])
+		this.neuralNetwork = this.GetNeuralNetwork()
 	}
 
 	private getIOAsValues<IO extends TI | TO>(typ: 'i' | 'o', io: IO): number[] {
@@ -116,6 +120,35 @@ export abstract class AAIDef<
 	}
 	public GetOutputVariants(io: number[]): TO {
 		return this.getIOAsVariants('o', io)
+	}
+
+	public GetNeuralNetworkMutation(margin: number = 0.1): NeuralNetwork {
+		const nn = this.GetNeuralNetwork()
+		const mutate = (num) => {
+			num += (Math.random() * (margin * 2)) - margin
+
+			if (num > 1) {
+				num -= 2
+			} else if (num < -1) {
+				num += 2
+			}
+
+			return num
+		}
+
+		for (let l = 0; l < this.neuralNetwork.layers.length; l++) {
+			for (let n = 0; n < this.neuralNetwork.layers[l].neurons.length; n++) {
+				const neuron = this.neuralNetwork.layers[l].neurons[n]
+
+				for (let w = 0; w < neuron.weights.length; w++) {
+					nn.layers[l].neurons[n].weights[w] = mutate(neuron.weights[w])
+				}
+
+				nn.layers[l].neurons[n].bias = mutate(neuron.bias)
+			}
+		}
+
+		return nn
 	}
 
 	public Train(
@@ -165,10 +198,10 @@ export abstract class AAIDef<
 
 		if (score > range.max) {
 			range.max = score
-			console.log('New max: ', range)
+			// console.log('New max: ', range)
 		} else if (score < range.min) {
 			range.min = score
-			console.log('New Min: ', range)
+			// console.log('New Min: ', range)
 		}
 
 		const min = (score > 0) ? 0 : range.min
@@ -192,7 +225,33 @@ export abstract class AAIDef<
 			targets = targets_strenght
 		}
 
-		this.neuralNetwork.train([this.latestInputs], [targets], 1, this.normalizeScore(score))
+		this.neuralNetwork.train([this.latestInputs], [targets], 1, this.normalizeScore(score) * 0.5)
+	}
+
+
+	public Export(ns: NS, path: string) {
+		ns.write(path, JSON.stringify(this.neuralNetwork, null, 2), 'w')
+	}
+	public Import(ns: NS, path: string) {
+		if (!ns.fileExists(path)) {
+			ns.print(`File does not exist at path: ${path}`)
+			return
+		}
+
+		const json = JSON.parse(ns.read(path))
+
+		// TODO: Infill the layers that are not defined by the import
+		if ((json['layers'] as any[]).length != this.HiddenLayers.length + 1) {
+			ns.print(`Layers from import are not equal to required layers: ${json.layers.length} != ${this.HiddenLayers.length + 1}`)
+			return
+		}
+
+		for (const key in json) {
+			const layers = json[key]
+			this.neuralNetwork.layers = layers
+		}
+
+		ns.print(`Successfully imported neural network from ${path}`)
 	}
 }
 

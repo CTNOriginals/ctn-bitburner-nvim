@@ -5,7 +5,7 @@ import * as Data from './data.ts'
 // Node Input, very short name because it has to be written atleast 25x
 const ni = CIODef.define(...Object.values(Data.NodeState))
 // Populate with a lot of moves to make passing unlikely
-const actions = CIODef.define('move', 'pass')
+const actions = CIODef.define('move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'pass', 'move', 'move', 'move', 'move', 'move')
 const coord = CIODef.define(0, 1, 2, 3, 4)
 
 // @ts-ignore:next-line
@@ -24,7 +24,7 @@ export class GoAI5 extends AAIDef<GoAI5> {
 		y: coord,
 	} as const
 
-	public HiddenLayers: number[] = [1]
+	public HiddenLayers: number[] = [100, 200, 100]
 
 	private logger: Logger
 
@@ -40,7 +40,7 @@ export class GoAI5 extends AAIDef<GoAI5> {
 
 		super.createNeuralNetwork()
 		// Attempt to preset the bias of the action output to favor 'move'
-		this.neuralNetwork.layers[this.neuralNetwork.layers.length - 1].neurons[0].bias = 0
+		// this.neuralNetwork.layers[this.neuralNetwork.layers.length - 1].neurons[0].bias = 0
 	}
 
 	private get log() {

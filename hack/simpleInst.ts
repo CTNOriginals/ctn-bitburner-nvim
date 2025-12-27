@@ -1,6 +1,6 @@
 
 export async function main(ns: NS) {
-	ns.disableLog('ALL')
+	// ns.disableLog('ALL')
 	const host = ns.args[0] as string
 
 	if (host == 'home') {
@@ -10,6 +10,7 @@ export async function main(ns: NS) {
 	const print = ns.print
 
 	while (true) {
+		ns.ramOverride()
 		print(`Weaken: ${ns.format.number(await ns.weaken(host))}\t ${host}`)
 		print(`Grow:   ${ns.format.number(await ns.grow(host))}\t ${host}`)
 		print(`Weaken: ${ns.format.number(await ns.weaken(host))}\t ${host}`)
