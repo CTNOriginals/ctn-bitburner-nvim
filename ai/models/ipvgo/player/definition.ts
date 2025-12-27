@@ -6,7 +6,7 @@ export abstract class AGoPlayer {
 	protected gameSession: GameSession
 	public IsPlaying: boolean = false
 
-	protected color: Data.KStone
+	public Color: Data.KStone
 
 	private logger: Logger
 
@@ -16,10 +16,8 @@ export abstract class AGoPlayer {
 	) {
 		this.logger = new Logger(ns)
 
-		if (this.Type == 'manual') {
-			this.color = 'black'
-		} else if (this.Type == 'npc') {
-			this.color = 'white'
+		if (this.Type == 'npc') {
+			this.Color = 'white'
 		}
 	}
 
@@ -30,7 +28,7 @@ export abstract class AGoPlayer {
 		return this.logger.log
 	}
 	private get isWhite(): boolean {
-		return this.color == 'white'
+		return this.Color == 'white'
 	}
 	public get OpponentColor(): Data.KStone {
 		return this.isWhite ? 'black' : 'white'
@@ -78,7 +76,7 @@ export abstract class AGoPlayer {
 	public OnGameStart(session: GameSession, color: Data.KStone) {
 		this.gameSession = session
 		if (this.Type == 'ai') {
-			this.color = color
+			this.Color = color
 		}
 		this.IsPlaying = true
 	}
@@ -89,7 +87,7 @@ export abstract class AGoPlayer {
 	// public OnOpponentMove() { }
 
 	public GetRandomMove(): Data.Position | null {
-		const valid = this.ns.go.analysis.getValidMoves(this.color === 'white')
+		const valid = this.ns.go.analysis.getValidMoves(this.Color === 'white')
 		const coords: [Data.Coord, Data.Coord][] = []
 
 		for (let x = 0; x < this.gameSession.BoardSize; x++) {
@@ -109,7 +107,7 @@ export abstract class AGoPlayer {
 	}
 
 	public CountStones(board: Data.BoardState = this.gameSession.BoardState): number {
-		return this.gameSession.CountStones(board)[this.color]
+		return this.gameSession.CountStones(board)[this.Color]
 	}
 
 	public CalculateMoveReward(doLog: boolean = false) {
@@ -135,13 +133,13 @@ export abstract class AGoPlayer {
 		const territoryBefore = this.CountStones(this.ns.go.analysis.getControlledEmptyNodes(boardBefore) as Data.BoardState)
 		const territoryAfter = this.CountStones(this.ns.go.analysis.getControlledEmptyNodes(boardAfter) as Data.BoardState)
 		const territory = territoryAfter - territoryBefore
-		reward += territory * 2
+		reward += territory
 		log(`Territ:\t ${territory}`)
 
 		// 3. LIBERTIES (sum them from the API)
 		const libertiesBefore = this.gameSession.Liberties(boardBefore)
 		const libertiesAfter = this.gameSession.Liberties(boardAfter)
-		const liberty = libertiesAfter[this.color] - libertiesBefore[this.color]
+		const liberty = libertiesAfter[this.Color] - libertiesBefore[this.Color]
 		reward += liberty
 		log(`Libert:\t ${liberty}`)
 

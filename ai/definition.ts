@@ -39,7 +39,7 @@ export class CIODef<T = string | number> {
 }
 
 export abstract class AAIDef<
-	TInst extends AAIDef<never>,
+	TInst extends AAIDef<never> = AAIDef<never>,
 	TI = IOToVariants<TInst['Inputs']>,
 	TO = IOToVariants<TInst['Outputs']>
 > {
@@ -51,7 +51,8 @@ export abstract class AAIDef<
 
 	public abstract HiddenLayers: number[]
 
-	protected neuralNetwork: NeuralNetwork
+	// protected neuralNetwork: NeuralNetwork
+	public neuralNetwork: NeuralNetwork
 
 	private latestInputs: number[]
 	private latestOutputs: number[]

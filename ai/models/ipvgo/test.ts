@@ -5,6 +5,9 @@ import { AIPlayer } from './player/aiPlayer.ts'
 import { ManualPlayer } from './player/manualPlayer.ts'
 import { NPCPlayer } from './player/npcPlayer.ts'
 
+
+const winThreshold = 50
+
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
 	ns.clearLog()
@@ -17,13 +20,14 @@ export async function main(ns: NS) {
 	let p2 = new AIPlayer(ns)
 	// const p2 = new NPCPlayer(ns, 'Netburners')
 
-	const session = new GameSession(ns, 5, p1, p2)
-	ns.go.analysis.resetStats()
 
 	let gameCount = 0
 
+	const session = new GameSession(ns, 5, p1, p2)
+	ns.go.analysis.resetStats()
+
 	while (true) {
-		session.Reset()
+		session.Restart()
 		// ns.go.analysis.setTestingBoardState([
 		// 	'X...#',
 		// 	'..O..',
@@ -36,29 +40,36 @@ export async function main(ns: NS) {
 
 		await session.Start()
 		await ns.asleep(1)
-		logger.log('Game Over\n\n')
-
 
 		gameCount++
-		if (gameCount >= 100) {
-			const stats = ns.go.analysis.getStats()['No AI']
-			if (!stats) {
+		// const stats = ns.go.analysis.getStats()['No AI']
+		const stats = session.Stats
+		if (!stats) {
+			continue
+		}
+		if (gameCount >= winThreshold && (stats.Won >= winThreshold || stats.Lost >= winThreshold)) {
+			if (stats.Won == stats.Lost) {
 				continue
 			}
 
-			if (stats.wins == stats.losses) {
-				continue
+			logger.log(`\n---- Game Over ----`)
+
+			let winner = 'Player1'
+			let loser = 'Player2'
+
+			if (stats.Won < stats.Lost) {
+				winner = 'Player2'
+				loser = 'Player1'
 			}
 
-			if (stats.wins > stats.losses) {
-				p2 = new AIPlayer(ns)
-			} else {
-				p1 = new AIPlayer(ns)
-			}
+			logger.log(`Regenerating: ${session[loser].Color}`)
+			session[loser] = new AIPlayer(ns)
 
 			ns.go.analysis.resetStats()
 
+			session.Reset()
 			gameCount = 0
+			logger.log('\n\n')
 		}
 	}
 

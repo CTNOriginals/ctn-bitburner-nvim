@@ -5,7 +5,7 @@ import * as Data from './data.ts'
 // Node Input, very short name because it has to be written atleast 25x
 const ni = CIODef.define(...Object.values(Data.NodeState))
 // Populate with a lot of moves to make passing unlikely
-const actions = CIODef.define('pass', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move',)
+const actions = CIODef.define('move', 'pass')
 const coord = CIODef.define(0, 1, 2, 3, 4)
 
 // @ts-ignore:next-line
@@ -24,21 +24,23 @@ export class GoAI5 extends AAIDef<GoAI5> {
 		y: coord,
 	} as const
 
-	public HiddenLayers: number[] = []
+	public HiddenLayers: number[] = [1]
 
 	private logger: Logger
 
 	constructor(ns: NS) {
 		super()
+		this.logger = new Logger(ns)
 
-		const size = 1 + (Math.floor(Math.random() * 4))
-		for (let i = 0; i < size; i++) {
-			this.HiddenLayers.push(Math.floor(25 + (Math.random() * 75)))
-		}
-		console.log(this.HiddenLayers)
+		// const size = 1 + (Math.floor(Math.random() * 3))
+		// for (let i = 0; i < size; i++) {
+		// 	this.HiddenLayers.push(Math.floor(25 + (Math.random() * 75)))
+		// }
+		// console.log(this.HiddenLayers)
 
 		super.createNeuralNetwork()
-		this.logger = new Logger(ns)
+		// Attempt to preset the bias of the action output to favor 'move'
+		this.neuralNetwork.layers[this.neuralNetwork.layers.length - 1].neurons[0].bias = 0
 	}
 
 	private get log() {

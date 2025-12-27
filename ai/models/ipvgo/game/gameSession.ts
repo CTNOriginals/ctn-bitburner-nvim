@@ -4,8 +4,58 @@ import { AIPlayer } from '../player/aiPlayer.ts'
 import { AGoPlayer } from '../player/definition.ts'
 import { NPCPlayer } from '../player/npcPlayer.ts'
 
+type TGameScore = { self: number, opp: number }
+export class GameStats {
+	public GameCount: number = 0
+	public Won: number = 0
+	public ScoreHistory: TGameScore[] = []
+
+	public get Lost() {
+		return this.GameCount - this.Won
+	}
+
+	public Report(self: number, opp: number) {
+		this.GameCount++
+		this.ScoreHistory.push({ self: self, opp: opp })
+
+		if (self > opp) {
+			this.Won++
+		}
+	}
+
+	/** Get the total game score of each player */
+	public GetTotal(): TGameScore {
+		let score: TGameScore = { self: 0, opp: 0 }
+
+		for (const score of this.ScoreHistory) {
+			score.self += score.self
+			score.opp += score.opp
+		}
+
+		return score
+	}
+
+	/** Get the average game score of each player */
+	public GetAverage(): TGameScore {
+		let score: TGameScore = this.GetTotal()
+
+		score.self /= this.GameCount
+		score.opp /= this.GameCount
+
+		return score
+	}
+
+	/** Get the average difference between game scores */
+	public GetRatio(): number {
+		const score = this.GetAverage()
+		return score.self - score.opp
+	}
+}
+
 export class GameSession {
 	public BoardHistory: Data.BoardState[] = []
+
+	public Stats: GameStats = new GameStats()
 
 	private logger: Logger
 
@@ -41,9 +91,6 @@ export class GameSession {
 		return 'No AI'
 	}
 
-	public Reset() {
-		this.go.resetBoardState(this.GoOpponentName(), this.BoardSize)
-	}
 
 	public async Start(): Promise<void> {
 		this.BoardHistory = [this.go.getBoardState() as Data.BoardState]
@@ -77,6 +124,27 @@ export class GameSession {
 		// black.OnGameEnd()
 		// white.OnGameEnd()
 		this.PlayersDo('OnGameEnd')
+
+		const state = this.go.getGameState()
+		this.Stats.Report(state.blackScore, state.whiteScore)
+
+		if (state.blackScore == state.whiteScore) {
+			this.log(`Tie: ${state.blackScore} / ${state.whiteScore}`)
+			return
+		}
+
+		const winner = ((state.blackScore > state.whiteScore) ? "black" : "white")
+		const loser = ((state.blackScore > state.whiteScore) ? "white" : "black")
+
+		this.log(`${this.Stats.GameCount}: ${winner} ${state[winner + 'Score']} / ${state[loser + 'Score']} = ${state[winner + 'Score'] - state[loser + 'Score']} (${this.Stats.GetRatio()})`)
+	}
+
+	public Restart() {
+		this.go.resetBoardState(this.GoOpponentName(), this.BoardSize)
+	}
+
+	public Reset() {
+		this.Stats = new GameStats()
 	}
 
 	public CountStones(board: Data.BoardState = this.BoardState): Record<Data.KStone, number> {

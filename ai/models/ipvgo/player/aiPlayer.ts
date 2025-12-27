@@ -26,6 +26,11 @@ export class AIPlayer extends AGoPlayer {
 	// 	super.OnGameStart(session, color)
 	// }
 
+	public override OnGameEnd(): void {
+		super.OnGameEnd()
+		// TODO: Log average score
+	}
+
 	private getMove(): typeof this.ai.TOut {
 		const inputs = this.ai.GetInputFromBoard(this.gameSession.BoardState)
 		let result = this.ai.Test(inputs)
@@ -53,7 +58,7 @@ export class AIPlayer extends AGoPlayer {
 		this.ai.Feedback(this.ai.GetOutputValues(move), -rate)
 	}
 
-	public override async Move() {
+	private getValidMove(): typeof this.ai.TOut {
 		let move = this.getMove()
 		let pos = this.getPos(move)
 		const valid = this.GetValidMoves()
@@ -63,8 +68,6 @@ export class AIPlayer extends AGoPlayer {
 		while (!valid[pos.x][pos.y]) {
 			// TODO: Adjust this value based on possible moves on board
 			this.onInvalidMove(move)
-			// this.ai.Feedback(10)
-			// this.log(`Invalid move received: ${move.x} ${move.y}. Retrying...`)
 
 			if (retries >= 100) {
 				const random = this.GetRandomMove()
@@ -78,16 +81,18 @@ export class AIPlayer extends AGoPlayer {
 				break
 			}
 
-			// await new Promise((res) => {
-			// 	setTimeout(() => {
-			// 		res(null)
-			// 	}, 10)
-			// })
-
 			retries++
 			move = this.getMove()
 			pos = this.getPos(move)
 		}
+
+		return move
+	}
+
+	public override async Move() {
+		let move = this.getValidMove()
+		let pos = this.getPos(move)
+		let score = -0.5
 		// this.log(`Retries: ${retries}`)
 
 		// this.log(inputs)
@@ -98,24 +103,25 @@ export class AIPlayer extends AGoPlayer {
 			// TODO: Give the ai a score based on how many viable
 			// moves it could have made instead of passing
 			super.Pass()
+			// score -= 1
 			// this.ai.Feedback(this.ai.GetOutputValues(move), -1)
 		} else {
 			super.Move(pos)
+			score += this.CalculateMoveReward()
 		}
 
-		let score = this.CalculateMoveReward()
 		if (move.action == 'pass') {
 			score -= this.GetValidPositions().length
 		}
 
 		this.ai.Feedback(this.ai.GetOutputValues(move), score)
 		// this.log(this.gameSession.BoardHistory.length)
-		this.log(score)
+		// this.log(score)
 	}
 
 	public override GetRandomMove(): Data.Position | null {
 		const count = this.gameSession.CountStones()
-		if (count[this.OpponentColor] < 2 && count[this.color] > 1) {
+		if (count[this.OpponentColor] < 2 && count[this.Color] > 1) {
 			return null
 		}
 
