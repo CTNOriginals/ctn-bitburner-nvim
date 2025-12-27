@@ -46,9 +46,17 @@ export abstract class AAIDef<
 	public abstract Inputs: TIO
 	public abstract Outputs: TIO
 
+	public TIn: TI
+	public TOut: TO
+
 	public abstract HiddenLayers: number[]
 
 	protected neuralNetwork: NeuralNetwork
+
+	private latestInputs: number[]
+	private latestOutputs: number[]
+
+	private scoreRange = { min: 0, max: 0 }
 
 	constructor() { }
 
@@ -96,11 +104,10 @@ export abstract class AAIDef<
 		return out
 	}
 
-
 	public GetInputValues(io: TI): number[] {
 		return this.getIOAsValues('i', io)
 	}
-	public GetOutputsValues(io: TO): number[] {
+	public GetOutputValues(io: TO): number[] {
 		return this.getIOAsValues('o', io)
 	}
 	public GetInputVariants(io: number[]): TI {
@@ -120,7 +127,7 @@ export abstract class AAIDef<
 
 		for (const d of data) {
 			ins.push(this.GetInputValues(d.inputs))
-			outs.push(this.GetOutputsValues(d.outputs))
+			outs.push(this.GetOutputValues(d.outputs))
 		}
 
 		this.neuralNetwork.train(ins, outs, cycles, rate)
@@ -146,7 +153,45 @@ export abstract class AAIDef<
 			results[key] = def.GetVarientFromValue(outs[i])
 		}
 
+		this.latestInputs = ins
+		this.latestOutputs = outs
+
 		return results
+	}
+
+	private normalizeScore(score: number): number {
+		const range = this.scoreRange
+
+		if (score > range.max) {
+			range.max = score
+			console.log('New max: ', range)
+		} else if (score < range.min) {
+			range.min = score
+			console.log('New Min: ', range)
+		}
+
+		const min = (score > 0) ? 0 : range.min
+		const max = (score < 0) ? 0 : range.max
+
+		const value = max - min
+		if (value === 0) return 0
+
+		return ((score - min) / value) * 2 - 1
+	}
+
+	/** Give immidiate feedback to the ai based on its most recent inputs and outputs */
+	public Feedback(targets: number[], strength?: number): void;
+	public Feedback(strength: number): void;
+	public Feedback(targets_strenght?: number[] | number, score: number = 0.1) {
+		let targets = this.latestOutputs
+
+		if (typeof targets_strenght == 'number') {
+			score = targets_strenght
+		} else if (Array.isArray(targets_strenght)) {
+			targets = targets_strenght
+		}
+
+		this.neuralNetwork.train([this.latestInputs], [targets], 1, this.normalizeScore(score))
 	}
 }
 

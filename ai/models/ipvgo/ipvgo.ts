@@ -1,18 +1,12 @@
-import { AAIDef, CIODef } from "../../definition.ts";
+import { Logger } from "../../../logging/index.ts";
+import { AAIDef, CIODef, ExtractVariants, IOToVariants } from "../../definition.ts";
 import * as Data from './data.ts'
 
 // Node Input, very short name because it has to be written atleast 25x
 const ni = CIODef.define(...Object.values(Data.NodeState))
-const position = CIODef.define(
-	0, 1, 2, 3, 4,
-	5, 6, 7, 8, 9,
-	10, 11, 12, 13, 14,
-	15, 16, 17, 18, 19,
-	20, 21, 22, 23, 24
-)
-// redundant as it is just simple to know if the ai should skip
-// Maybe implement later with more time
-// const actions = CIODef.define('place', 'pass')
+// Populate with a lot of moves to make passing unlikely
+const actions = CIODef.define('pass', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move', 'move',)
+const coord = CIODef.define(0, 1, 2, 3, 4)
 
 // @ts-ignore:next-line
 export class GoAI5 extends AAIDef<GoAI5> {
@@ -25,18 +19,44 @@ export class GoAI5 extends AAIDef<GoAI5> {
 	} as const
 
 	public Outputs = {
-		x: position,
-		y: position,
+		action: actions,
+		x: coord,
+		y: coord,
 	} as const
 
-	public HiddenLayers: number[] = [30, 25, 10, 5];
+	public HiddenLayers: number[] = []
 
-	constructor() {
+	private logger: Logger
+
+	constructor(ns: NS) {
 		super()
+
+		const size = 1 + (Math.floor(Math.random() * 4))
+		for (let i = 0; i < size; i++) {
+			this.HiddenLayers.push(Math.floor(25 + (Math.random() * 75)))
+		}
+		console.log(this.HiddenLayers)
+
 		super.createNeuralNetwork()
+		this.logger = new Logger(ns)
 	}
 
-	// public GetInputFromBoard(board: Data.BoardState): typeof this.Inputs {
-	//
-	// }
+	private get log() {
+		return this.logger.log
+	}
+
+	public GetInputFromBoard(board: Data.BoardState): Record<keyof typeof this.Inputs, ExtractVariants<typeof ni>> {
+		const result = {} as ReturnType<typeof this.GetInputFromBoard>
+		const size = board.length
+
+		for (let x = 0; x < size; x++) {
+			for (let y = 0; y < size; y++) {
+				const i = y + (x * size)
+				result[this.InputKeys[i]] = board[x][y] as Data.VNodeState
+				// this.log(`${i}: ${board[x][y]}`)
+			}
+		}
+
+		return result
+	}
 }

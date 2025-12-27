@@ -23,7 +23,8 @@ export type KStone = Extract<KNodeState, 'black' | 'white'>
 export type BoardState = VNodeState[]
 export type BoardSize = 5 | 7 | 9 | 13
 
-export type Position = { x: number, y: number }
+export type Coord = 0 | 1 | 2 | 3 | 4
+export type Position = { x: Coord, y: Coord }
 
 export function GetStateNameFromValue(val: VNodeState): KNodeState {
 	return NodeStateKeys[NodeStateValues.indexOf(val)]

@@ -43,11 +43,10 @@ export class GameSession {
 
 	public Reset() {
 		this.go.resetBoardState(this.GoOpponentName(), this.BoardSize)
-		this.BoardHistory = [this.go.getBoardState() as Data.BoardState]
 	}
 
 	public async Start(): Promise<void> {
-		this.Reset()
+		this.BoardHistory = [this.go.getBoardState() as Data.BoardState]
 		const black = this.Player1
 		const white = this.Player2
 
@@ -61,7 +60,7 @@ export class GameSession {
 
 			const player = turn == 'Black' ? black : white
 
-			player.Move()
+			await player.Move()
 
 			if (player.Type !== 'ai') {
 				await player.Wait()
@@ -69,12 +68,12 @@ export class GameSession {
 
 			this.BoardHistory.push(this.go.getBoardState() as Data.BoardState)
 
-			this.log(`\n\n---- ${turn} (${player.Type}) ----`)
-			this.log(`---- ${player.CalculateMoveReward()} ----`)
+			// this.log(`---- ${turn} (${player.Type}) ----`)
+			// this.log(`---- ${player.CalculateMoveReward(true)} ----\n\n`)
 			// this.log(this.go.analysis.getLiberties(this.BoardState).join('\n'))
 		}
 
-		this.logger.log('Game ended')
+		// this.logger.log('Game ended')
 		// black.OnGameEnd()
 		// white.OnGameEnd()
 		this.PlayersDo('OnGameEnd')

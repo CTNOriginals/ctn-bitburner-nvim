@@ -53,6 +53,28 @@ export abstract class AGoPlayer {
 		return this.go.opponentNextTurn(false, this.isWhite)
 	}
 
+	public GetValidMoves() {
+		return this.go.analysis.getValidMoves(undefined, undefined, this.isWhite)
+	}
+	public GetValidPositions(): Data.Position[] {
+		const valid = this.GetValidMoves()
+		const positions: Data.Position[] = []
+
+		for (let x = 0; x < this.gameSession.BoardSize; x++) {
+			for (let y = 0; y < this.gameSession.BoardSize; y++) {
+				if (valid[x][y]) {
+					positions.push({ x: x as Data.Coord, y: y as Data.Coord })
+				}
+			}
+		}
+
+		return positions
+	}
+	public IsValidMove(pos: Data.Position): boolean {
+		const valid = this.GetValidMoves()
+		return valid[pos.x][pos.y]
+	}
+
 	public OnGameStart(session: GameSession, color: Data.KStone) {
 		this.gameSession = session
 		if (this.Type == 'ai') {
@@ -64,14 +86,16 @@ export abstract class AGoPlayer {
 		this.IsPlaying = false
 	}
 
+	// public OnOpponentMove() { }
+
 	public GetRandomMove(): Data.Position | null {
 		const valid = this.ns.go.analysis.getValidMoves(this.color === 'white')
-		const coords: [number, number][] = []
+		const coords: [Data.Coord, Data.Coord][] = []
 
 		for (let x = 0; x < this.gameSession.BoardSize; x++) {
 			for (let y = 0; y < this.gameSession.BoardSize; y++) {
 				if (valid[x][y] && this.gameSession.BoardState[x][y] == Data.NodeState.empty) {
-					coords.push([x, y])
+					coords.push([x as Data.Coord, y as Data.Coord])
 				}
 			}
 		}
@@ -88,7 +112,14 @@ export abstract class AGoPlayer {
 		return this.gameSession.CountStones(board)[this.color]
 	}
 
-	public CalculateMoveReward() {
+	public CalculateMoveReward(doLog: boolean = false) {
+		const log = (...msg: string[]) => {
+			if (!doLog) {
+				return
+			}
+			this.log(...msg)
+		}
+		// this.log(`${this.Type} Getting rewards: ${this.go.getCurrentPlayer()}`)
 		const boardBefore = this.gameSession.BoardHistory[this.gameSession.BoardHistory.length - 2]
 		const boardAfter = this.gameSession.BoardHistory[this.gameSession.BoardHistory.length - 1]
 		let reward = 0
@@ -98,23 +129,31 @@ export abstract class AGoPlayer {
 		const stonesAfter = this.gameSession.CountStones(boardAfter)
 		const captured = stonesBefore[this.OpponentColor] - stonesAfter[this.OpponentColor]
 		reward += captured
-		this.log(`Captre:\t ${captured}`)
+		log(`Captre:\t ${captured}`)
 
 		// 2. TERRITORY CLAIMED (built-in API!)
 		const territoryBefore = this.CountStones(this.ns.go.analysis.getControlledEmptyNodes(boardBefore) as Data.BoardState)
 		const territoryAfter = this.CountStones(this.ns.go.analysis.getControlledEmptyNodes(boardAfter) as Data.BoardState)
 		const territory = territoryAfter - territoryBefore
-		reward += territory
-		this.log(`Territ:\t ${territory}`)
+		reward += territory * 2
+		log(`Territ:\t ${territory}`)
 
 		// 3. LIBERTIES (sum them from the API)
 		const libertiesBefore = this.gameSession.Liberties(boardBefore)
 		const libertiesAfter = this.gameSession.Liberties(boardAfter)
 		const liberty = libertiesAfter[this.color] - libertiesBefore[this.color]
 		reward += liberty
-		this.log(`Libert:\t ${liberty}`)
+		log(`Libert:\t ${liberty}`)
 
-		return reward / 10
+		const stats = this.go.getGameState()
+		const statScore = (this.isWhite) ? stats.whiteScore : stats.blackScore
+		const oppScore = (!this.isWhite) ? stats.whiteScore : stats.blackScore
+		const scoreDiff = statScore - oppScore
+		// const scoreRatio = scoreDiff / statScore
+
+		let result = reward
+		result += result * scoreDiff
+		return result
 	}
 }
 
