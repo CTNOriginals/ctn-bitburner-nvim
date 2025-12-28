@@ -1,51 +1,57 @@
 import { Logger } from '../../logging/index.ts'
+import * as Startup from './startup.ts'
 
 /** An object containing each pid of and their startup time code */
-export const ProcessStartup: Map<number, number> = new Map<number, number>()
+export const ProcessStartup: Startup.TStartupMap = new Map<number, number>()
 
-export async function main(ns: NS) {
+let ns: NS
+
+export async function main(n: NS) {
+	ns = n
 	ns.disableLog('ALL')
 	const logger = new Logger(ns)
 	const log = (...msg: any[]) => logger.log(...msg)
 
+	Startup.Init(ns)
+
 	const updateInterval = 1000
 
 	while (true) {
+		Startup.UpdateStartupMap(ProcessStartup)
 		await ns.asleep(updateInterval)
-
-		for (const proc of ns.ps()) {
-			const script = ns.getRunningScript(proc.pid)
-			if (!script) {
-				continue
-			}
-			validateScript(script)
-		}
-
-		for (const recent of ns.getRecentScripts()) {
-			if (recent.timeOfDeath.getTime() < Date.now() - updateInterval + (updateInterval * 0.1)) {
-				break
-			}
-
-			validateScript(recent)
-		}
 	}
 }
 
-function validateScript(script: RunningScript | RecentScript) {
-	const pid = script.pid
-	const now = Date.now()
-
-	if (ProcessStartup.has(pid)) {
-		return
+export function GetScriptByPID(pid: number): (RunningScript | RecentScript) | null {
+	for (const ps of ns.ps()) {
+		if (ps.pid == pid) {
+			return ns.getRunningScript(pid)
+		}
 	}
 
-	let time = now
-
-	if ('timeOfDeath' in script) {
-		time -= now - script.timeOfDeath.getTime()
+	for (const recent of ns.getRecentScripts()) {
+		if (recent.pid == pid) {
+			return recent
+		}
 	}
 
-	time -= (script.onlineRunningTime + script.offlineRunningTime) * 1000
+	return null
+}
 
-	ProcessStartup.set(pid, time)
+export function GetStartupEntriesByFile(file: string): typeof ProcessStartup {
+	const entries: ReturnType<typeof GetStartupEntriesByFile> = new Map()
+
+	for (const [pid, time] of ProcessStartup.entries()) {
+		const script = GetScriptByPID(pid)
+
+		if (!script) {
+			continue
+		}
+
+		if (script.filename == file) {
+			entries.set(pid, time)
+		}
+	}
+
+	return entries
 }
