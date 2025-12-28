@@ -1,8 +1,8 @@
 import { Logger } from "../../logging/index.ts"
 import { getAllImportPaths } from "./tmp.ts"
+import * as ScriptManager from "../../managers/script/script.ts"
 
 type TScriptMap = { [pid: number]: RunningScript }
-
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
@@ -22,15 +22,20 @@ export async function main(ns: NS) {
 			pathList.push(...getAllImportPaths(ns, script.filename))
 
 			for (const path of pathList) {
+				if (!ScriptManager.ProcessStartup.has(script.pid)) {
+					continue
+				}
+
+				const startup = ScriptManager.ProcessStartup.get(script.pid)!
 				const modTime = ns.getFileMetadata(path).mtime
+
 				// logger.log(`${path}: ${modTime}`)
 
-				if (script.startTime < modTime) {
+				if (startup < modTime) {
 					restartScript(ns, script)
 					break
 				}
 			}
-			// logger.log('\n')
 		}
 	}
 }
