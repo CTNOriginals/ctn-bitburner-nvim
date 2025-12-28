@@ -17,7 +17,7 @@ export function getAllImportPaths(ns: NS, path: string, maxLines = -1, history: 
 
 		if (match == null || importPath == null) continue;
 		importPath = resolvePath(path, importPath)
-		if (pathList.includes(importPath) || history.includes(importPath)) continue;
+		if (!ns.fileExists(importPath) || pathList.includes(importPath) || history.includes(importPath)) continue;
 
 		pathList.push(importPath);
 		history.push(...pathList);
