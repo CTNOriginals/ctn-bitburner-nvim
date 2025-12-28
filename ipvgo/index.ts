@@ -6,7 +6,7 @@ export async function main(ns: NS) {
 	logger = new Logger(ns)
 
 	while (true) {
-		await ns.sleep(1000)
+		await ns.sleep(10)
 		await PlaySession(ns)
 		logger.log('Game Over')
 	}
@@ -19,9 +19,9 @@ async function PlaySession(ns: NS) {
 
 	// go.resetBoardState('No AI', 5)
 	// go.analysis.setTestingBoardState(['.....', '.....', '.....', '.....', '.....',], 1.5)
-	// go.resetBoardState('Netburners', 5)
-	go.resetBoardState('Daedalus', 5)
-	// go.resetBoardState('Illuminati', 5)
+	// go.resetBoardState('Netburners', 13)
+	// go.resetBoardState('The Black Hand', 13)
+	go.resetBoardState('Illuminati', 13)
 
 	while (true) {
 		await ns.sleep(1)

@@ -2,10 +2,10 @@ import { AAIDef, CIODef } from './ai/definition.ts'
 import { GoAI5 } from './ai/models/ipvgo/ipvgo.ts'
 import { NeuralNetwork } from './ai/neuralNetwork.ts'
 import { Logger } from './logging/index.ts'
+import * as ScriptManager from './managers/script/script.ts'
 
 // @ts-ignore:next-line
 class ProtoAI extends AAIDef<ProtoAI> {
-
 	public Inputs = {
 		i1: CIODef.define('foo', 'bar'),
 		// i2: new CIODef('foo', 'bar'),
@@ -32,32 +32,11 @@ export function main(ns: NS) {
 	const logger = new Logger(ns)
 	const log = (...msg: any[]) => logger.log(...msg)
 
-	log(ns.ls('home', 'ai/models/ipvgo/export'))
-
-
-	const ai = new ProtoAI(log)
-	ai.Import(ns, 'tmp/ai.json')
-	const nn = ai.neuralNetwork
-	log(objStr(nn))
-	log(ai.Test({ i1: 'foo' }))
-
-	// nn.layers[0].neurons[0].weights = [1]
-	// nn.layers[0].neurons[0].bias = 0
-	//
-	// nn.layers[1].neurons[0].weights = [1]
-	// nn.layers[1].neurons[0].bias = 0
-
-	// nn.layers[1].neurons[1].weights = [1]
-	// nn.layers[1].neurons[1].bias = 1
-	// log(objStr(nn))
-	// ai.Export(ns, 'tmp/ai.json')
-
-	// log('00: ', nn.forward([0, 0]))
-	// log('01: ', nn.forward([0, 1]))
-	// log('10: ', nn.forward([1, 0]))
-	// log('11: ', nn.forward([1, 1]))
-
-	// log(objStr(nn.layers.pop()?.neurons))
+	// log(ScriptManager.ProcessStartup)
+	for (const [pid, time] of ScriptManager.ProcessStartup.entries()) {
+		const script = ns.getRunningScript(pid) || ns.getRecentScripts().find(s => s.pid == pid)
+		log(`${pid}: ${(Date.now() - time) / 1000} - ${script?.title}`)
+	}
 }
 
 function objStr(obj: any): string {
