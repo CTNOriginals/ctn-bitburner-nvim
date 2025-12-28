@@ -21,7 +21,7 @@ export async function UpdateStartupMap(map: TStartupMap) {
 	}
 
 	for (const recent of ns.getRecentScripts()) {
-		if (recent.timeOfDeath.getTime() < lastUpdate) {
+		if (recent.timeOfDeath.getTime() < lastUpdate || recent.server !== ns.getHostname()) {
 			break
 		}
 
