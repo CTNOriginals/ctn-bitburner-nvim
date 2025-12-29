@@ -33,16 +33,16 @@ export async function main(ns: NS) {
 	const logger = new Logger(ns)
 	const log = (...msg: any[]) => logger.log(...msg)
 
-	// // log(ScriptManager.ProcessStartup
-	// if (ScriptManager.ProcessStartup.size == 0) {
-	// 	await ns.asleep(1100)
-	// }
-	//
-	// for (const [pid, time] of ScriptManager.ProcessStartup.entries()) {
-	// 	const script = ns.getRunningScript(pid) || ns.getRecentScripts().find(s => s.pid == pid)
-	// 	log(`${pid}: ${(Date.now() - time) / 1000} - ${script?.title}`)
-	// }
+	// log(ScriptManager.ProcessStartup
+	if (ScriptManager.ProcessStartup.size == 0) {
+		await ns.asleep(1100)
+	}
 
+	for (const [pid, time] of ScriptManager.ProcessStartup.entries()) {
+		const script = ns.getRunningScript(pid) || ns.getRecentScripts().find(s => s.pid == pid)
+		log(`${pid}: ${(Date.now() - time) / 1000} - ${script?.title}`)
+	}
+	return
 	let tree: { [key: string]: string[] } = {}
 	const f = ns.format.number
 
