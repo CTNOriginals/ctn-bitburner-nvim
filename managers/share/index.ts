@@ -6,9 +6,10 @@ export async function main(ns: NS) {
 
 	// await ns.asleep(100)
 	const instFile = 'managers/share/shareInst.ts'
+	const host = ns.getHostname()
 
-	const max = ns.getServerMaxRam('home')
-	const used = ns.getServerUsedRam('home')
+	const max = ns.getServerMaxRam(host)
+	const used = ns.getServerUsedRam(host)
 	const cost = ns.getScriptRam(instFile)
 	const free = (max - 100) - used
 	const threads = Math.floor(free / cost)

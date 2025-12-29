@@ -5,7 +5,7 @@ import { Logger } from '../logging/index.ts'
 export async function ServerWorm(
 	ns: NS,
 	host: string,
-	func: (server: Server) => void | Promise<void>,
+	func: (server: Server, parent: string) => void | Promise<void>,
 	requireRoot: boolean = true,
 	tryGetRoot: boolean = true,
 	skipHome: boolean = true,
@@ -13,6 +13,8 @@ export async function ServerWorm(
 ) {
 	const scan = ns.scan(host)
 	const player = ns.getPlayer()
+
+	const children: string[] = []
 
 	for (const sub of scan) {
 		if (seen.includes(sub)) {
@@ -25,10 +27,6 @@ export async function ServerWorm(
 		}
 
 		const server = ns.getServer(sub)
-
-		// if (requireRoot && !server.hasAdminRights && server.requiredHackingSkill! > player.skills.hacking) {
-		// 	continue
-		// }
 
 		if (!server.hasAdminRights) {
 			let getRootAttemt = false
@@ -43,8 +41,22 @@ export async function ServerWorm(
 		}
 
 		// Get the server again to make sure the data is up to date
-		await func(ns.getServer(sub))
-		await ServerWorm(ns, sub, func, tryGetRoot, requireRoot, skipHome, seen)
+		await func(ns.getServer(sub), host)
+		children.push(sub)
+		// await ServerWorm(ns, sub, func, tryGetRoot, requireRoot, skipHome, seen)
+
+		// const childServers = ns.scan(sub)
+		// for (const child of childServers) {
+		// 	if (scan.includes(child)) {
+		// 		continue
+		// 	}
+		//
+		// 	scan.push(child)
+		// }
+	}
+
+	for (const child of children) {
+		await ServerWorm(ns, child, func, tryGetRoot, requireRoot, skipHome, seen)
 	}
 }
 

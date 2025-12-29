@@ -276,12 +276,6 @@ interface RunningScript {
    * If this script was started directly through the terminal, the value will be 0.
    */
   parent: number;
-  /** The UTC time code of when this script was started. */
-  startTime: number;
-  /** The UTC time code of when this script has ended.
-   * Will be -1 while the script is still running.
-   */
-  endTime: number;
   /**
    * How much RAM this script uses for ONE thread.
    * Also known as "static RAM usage," this value does not change once the
@@ -4063,14 +4057,15 @@ export interface CodingContract {
    * @remarks
    * RAM cost: 2 GB
    *
-   * Generate a dummy contract on the home computer with no reward. Used to test various algorithms.
+   * Generate a dummy contract on the current server with no reward. Used to test various algorithms.
    *
    * This function will return null and not generate a contract if the randomized contract name is the same as another contract's name.
    *
    * @param type - Type of contract to generate
+   * @param host - Hostname/IP of the server containing the contract. Optional. Defaults to the server the calling script is running on.
    * @returns Filename of the contract.
    */
-  createDummyContract(type: CodingContractName): string | null;
+  createDummyContract(type: CodingContractName, host?: string): string | null;
 
   /**
    * List all contract types.
@@ -4826,8 +4821,9 @@ export interface GoAnalysis {
    *
    * @param boardState - The initial board state to use for the new game, in the format used by getBoardState().
    * @param komi - Optional komi value to set for the game. Defaults to 5.5.
+   * @param nextPlayerIsWhite - Optional. Whether or not the next player to play is the white player. Defaults to false.
    */
-  setTestingBoardState(boardState: string[], komi?: number): void;
+  setTestingBoardState(boardState: string[], komi?: number, nextPlayerIsWhite?: boolean): void;
 
   /**
    * Adds a colored circle indicator to the specified point. These indicators are removed once a move is played.
