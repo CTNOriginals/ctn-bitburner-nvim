@@ -1,61 +1,13 @@
 import { Logger } from '../../logging/index.ts'
-import * as Data from './data.ts'
 import * as Worm from '../worm.ts'
 
-class ServerController {
-	private maxRam: number
-	private data = {
-		security: new Data.MinMaxSecurity(this.ns, this.Host),
-		money: new Data.MinMaxMoney(this.ns, this.Host),
-	} as const
+import { ServerController } from './serverController.ts'
+import * as Data from './data.ts'
 
-	constructor(
-		private ns: NS,
-		public Host: string,
-	) { }
+let ns: NS
 
-	public GetServer(): Data.TServer {
-		return this.ns.getServer(this.Host) as Data.TServer
-	}
-
-	public GetTotalTime(): number {
-		const server = this.GetServer()
-		return this.ns.getWeakenTime(server.hostname)
-			+ this.ns.getGrowTime(server.hostname)
-			+ this.ns.getHackTime(server.hostname)
-	}
-
-	public GetScore(): number {
-		const server = this.GetServer()
-		const growth = server.serverGrowth
-		const max = server.moneyMax
-		const time = this.GetTotalTime()
-
-		return (max / (100 - growth)) / time
-	}
-
-	public GetInfoString(): string {
-		const nf = this.ns.format.number
-		return [
-			`${this.Host}:${" ".repeat(18 - this.Host.length)} `,
-			`${nf(this.GetServer().moneyMax)}`,
-			`\t${this.GetServer().serverGrowth}`,
-			`\t${Math.round(this.GetTotalTime() / 1000)}`,
-			`\t= ${nf(this.GetScore(), 2)}`,
-		].join('')
-	}
-
-	public SetMaxRam(ram: number) {
-		this.maxRam = ram
-	}
-
-	/** Ensures that the server is maxed out before launching the first batching sequence */
-	public Initialize() {
-
-	}
-}
-
-export async function main(ns: NS) {
+export async function main(n: NS) {
+	ns = n
 	ns.disableLog('ALL')
 	const logger = new Logger(ns)
 	const log = (...msg: any[]) => logger.log(...msg)
@@ -68,7 +20,10 @@ export async function main(ns: NS) {
 
 	await Worm.ServerWorm(ns, host, (server: Server) => {
 		// servers.push(server as TServer)
-		controllers[server.hostname] = new ServerController(ns, server.hostname)
+		controllers[server.hostname] = new ServerController(
+			ns,
+			server.hostname,
+		)
 		hostList.push(server.hostname)
 	})
 
@@ -104,3 +59,4 @@ export async function main(ns: NS) {
 		].join(''))
 	}
 }
+
