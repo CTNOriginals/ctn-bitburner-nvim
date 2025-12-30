@@ -30,6 +30,7 @@ export async function main(n: NS) {
 		controllers[server.hostname] = new ServerController(
 			ns,
 			server.hostname,
+			0.5,
 			batchScripts,
 		)
 		hostList.push(server.hostname)
@@ -49,7 +50,7 @@ export async function main(n: NS) {
 			continue
 		}
 
-		serverScores[server.GetServer().hostname] = score
+		serverScores[server.Target] = score
 		totalScore += score
 	}
 

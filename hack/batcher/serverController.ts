@@ -66,8 +66,18 @@ export class ServerController {
 	constructor(
 		private ns: NS,
 		public Target: string,
+		private hackPercent: number,
 		private batchScripts: Data.TBatchScript,
 	) {
+		if (hackPercent <= 0 || hackPercent > 1) {
+			ns.tprint([
+				`ServerConstroller(${Target}) hackPercent expects a value between > 0 and 1`,
+				`but received ${hackPercent}.`,
+				`The value will be set to 0.5.`
+			].join(' '))
+			this.hackPercent = 0.5
+		}
+
 		this.hostServer = ns.getServer(ns.getHostname()) as Data.TServer
 	}
 
@@ -106,24 +116,26 @@ export class ServerController {
 		this.maxRam = ram
 	}
 
-	private getGrowThreadCount(): number {
-		return Math.ceil(this.ns.growthAnalyze(
-			this.Target,
-			this.money.Max / this.money.Current,
-			this.hostServer.cpuCores
-		))
-	}
-
-	private getWeakenThreadCount() {
-		const effect = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
-		return Math.ceil((this.security.Max - this.security.Min) / effect)
-	}
-
 	private getHackThreadCount(): number {
-		return 1
+		const targetMoney = this.money.Max * this.hackPercent
+		return Math.ceil(this.ns.hackAnalyzeThreads(this.Target, targetMoney))
 	}
 
-	private startBatch(type: keyof typeof this.batchScripts, host: string, threads: number): number {
+	private getGrowThreadCount(): number {
+		const growMult = this.money.Max / (this.money.Max * this.hackPercent)
+		return Math.ceil(this.ns.growthAnalyze(this.Target, growMult, this.hostServer.cpuCores))
+	}
+
+	private getWeakenThreadCount(type: Exclude<keyof Data.TBatchScript, 'weaken'>): number {
+		const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
+		const effect = (type == 'hack')
+			? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
+			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, this.hostServer.cpuCores)
+
+		return Math.ceil((effect - this.security.Min) / weakenStep)
+	}
+
+	private startBatch(type: keyof Data.TBatchScript, host: string, threads: number): number {
 		const file = this.batchScripts[type]
 
 		if (!this.ns.fileExists(file)) {
@@ -152,7 +164,6 @@ export class ServerController {
 	}
 
 	private startGrow() {
-
 	}
 
 	/** Ensures that the server is maxed out before launching the first batching sequence.
@@ -160,11 +171,19 @@ export class ServerController {
 	*/
 	public async Initialize() {
 		if (!this.money.IsMax()) {
+			const growThreads = Math.ceil(this.ns.growthAnalyze(
+				this.Target,
+				this.money.Max / this.money.Current,
+				this.hostServer.cpuCores
+			))
 			this.getGrowThreadCount()
 			this.ns.getGrowTime()
 		}
 
+
 		if (!this.security.IsMin()) {
+			const effect = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
+			const weakenThreads = Math.ceil((this.security.Max - this.security.Min) / effect)
 		}
 	}
 }
