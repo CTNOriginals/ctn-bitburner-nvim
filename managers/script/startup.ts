@@ -6,8 +6,8 @@ let lastUpdate = 0
 let ns: NS
 
 export function Init(n: NS) {
-	lastUpdate = 0
 	ns = n
+	lastUpdate = 0
 }
 
 export async function UpdateStartupMap(map: TStartupMap) {
@@ -46,6 +46,10 @@ function validateScript(map: TStartupMap, script: RunningScript | RecentScript) 
 	}
 
 	time -= (script.onlineRunningTime + script.offlineRunningTime) * 1000
+
+	ns.print(
+		`Startup Script: ${pid} ${script.filename} ${script.args}: ${(now - time) / 1000}s`
+	)
 
 	map.set(pid, time)
 }
