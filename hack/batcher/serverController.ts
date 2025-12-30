@@ -56,16 +56,19 @@ export class MinMaxMoney extends MinMaxGetter {
 
 export class ServerController {
 	private maxRam: number
-	private cores: number
 
 	private security = new MinMaxSecurity(this.ns, this.Target)
 	private money = new MinMaxMoney(this.ns, this.Target)
 
+	/** The server that this script is running on */
+	private hostServer: Data.TServer;
+
 	constructor(
 		private ns: NS,
 		public Target: string,
+		private batchScripts: Data.TBatchScript,
 	) {
-		this.cores = this.ns.getServer().cpuCores
+		this.hostServer = ns.getServer(ns.getHostname()) as Data.TServer
 	}
 
 	public GetServer(): Data.TServer {
@@ -107,13 +110,45 @@ export class ServerController {
 		return Math.ceil(this.ns.growthAnalyze(
 			this.Target,
 			this.money.Max / this.money.Current,
-			this.cores
+			this.hostServer.cpuCores
 		))
 	}
 
 	private getWeakenThreadCount() {
-		const effect = this.ns.weakenAnalyze(1, this.ns.getServer().cpuCores)
+		const effect = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
 		return Math.ceil((this.security.Max - this.security.Min) / effect)
+	}
+
+	private getHackThreadCount(): number {
+		return 1
+	}
+
+	private startBatch(type: keyof typeof this.batchScripts, host: string, threads: number): number {
+		const file = this.batchScripts[type]
+
+		if (!this.ns.fileExists(file)) {
+			this.ns.tprintf(
+				'File does not exist on this server\nFile: %s\nHost: %s',
+				file, this.ns.getHostname()
+			)
+
+			return -1
+		}
+
+		if (!this.ns.fileExists(file, host)) {
+			const copied = this.ns.scp(file, host)
+
+			if (!copied) {
+				this.ns.tprintf(
+					'Unable to copy file to target server\nFile: %s\nHost: %s',
+					file, host
+				)
+
+				return -1
+			}
+		}
+
+		return this.ns.exec(file, host, { threads: threads })
 	}
 
 	private startGrow() {

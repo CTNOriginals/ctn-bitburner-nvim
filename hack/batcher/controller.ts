@@ -4,6 +4,13 @@ import * as Worm from '../worm.ts'
 import { ServerController } from './serverController.ts'
 import * as Data from './data.ts'
 
+
+const batchScripts: Data.TBatchScript = {
+	weaken: 'hack/batcher/scripts/weaken.ts',
+	grow: 'hack/batcher/scripts/grow.ts',
+	hack: 'hack/batcher/scripts/hack.ts',
+}
+
 let ns: NS
 
 export async function main(n: NS) {
@@ -23,6 +30,7 @@ export async function main(n: NS) {
 		controllers[server.hostname] = new ServerController(
 			ns,
 			server.hostname,
+			batchScripts,
 		)
 		hostList.push(server.hostname)
 	})
