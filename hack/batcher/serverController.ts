@@ -164,6 +164,7 @@ export class ServerController {
 	}
 
 	private startGrow() {
+
 	}
 
 	/** Ensures that the server is maxed out before launching the first batching sequence.
@@ -182,8 +183,8 @@ export class ServerController {
 
 
 		if (!this.security.IsMin()) {
-			const effect = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
-			const weakenThreads = Math.ceil((this.security.Max - this.security.Min) / effect)
+			const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
+			const weakenThreads = Math.ceil((this.security.Current - this.security.Min) / weakenStep)
 		}
 	}
 }
