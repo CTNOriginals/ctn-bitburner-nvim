@@ -12,7 +12,12 @@ declare global {
 	type FileMetadata = NSD.FileMetadata
 	type SpawnOptions = NSD.SpawnOptions
 	type Server = NSD.Server
+
 	type GoOpponent = NSD.GoOpponent
+
+	type CodingContractNameEnumType = NSD.CodingContractNameEnumType
+	type CodingContractName = NSD.CodingContractName
+	type CodingContractObject = NSD.CodingContractObject
 
 	type Logger = _Logger
 
