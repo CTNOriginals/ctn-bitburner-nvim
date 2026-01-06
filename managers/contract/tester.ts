@@ -30,7 +30,7 @@ export async function main(ns: NS) {
 		contract = ns.codingcontract.getContract(file)
 	}
 
-	const res = solver.Solve(contract.data)
+	const res = solver.Solve(contract.data, log)
 	const submit = contract.submit(res)
 	log([
 		`-- ${type} -- `,

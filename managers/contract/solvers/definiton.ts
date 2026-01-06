@@ -1,10 +1,4 @@
-// export function Solve(data: Extract<CodingContractObject, { type: 'type_name' }>['data'], ns?: NS): string {
-export function Solve(data: CodingContractObject['data'], ns?: NS): string {
-	const log = (...msg: any[]) => {
-		if (!ns) {
-			return
-		}
-		ns.print(...msg)
-	}
+// export function Solve(data: Extract<CodingContractObject, { type: 'type_name' }>['data'], log: (...msg: any[]) => void = () => { return }): string {
+export function Solve(data: CodingContractObject['data'], log: (...msg: any[]) => void = () => { return }): string {
 	return ""
 }
