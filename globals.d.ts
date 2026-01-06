@@ -19,6 +19,8 @@ declare global {
 	type CodingContractName = NSD.CodingContractName
 	type CodingContractObject = NSD.CodingContractObject
 
+	type AutocompleteData = NSD.AutocompleteData
+
 	type Logger = _Logger
 
 	type ArrayN<T, N extends number> = _types.ReadonlyArrayExactLength<T, N>

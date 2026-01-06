@@ -33,8 +33,4 @@ export type TContractType = typeof ContractType
 export type KContractType = keyof TContractType
 export type VContractType = TContractType[KContractType]
 
-export function GetContractTypeByName(name: VContractType): KContractType {
-	const keys = Object.keys(ContractType)
-	const vals = Object.values(ContractType)
-	return keys[vals.indexOf(name)] as KContractType
-}
+export type TSolver = typeof import('./solvers/definiton.ts')

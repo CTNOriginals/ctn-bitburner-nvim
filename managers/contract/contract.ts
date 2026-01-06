@@ -1,6 +1,7 @@
 import { Logger } from '../../logging/index.ts'
 import * as Worm from '../../hack/worm.ts'
 import * as Data from './data.ts'
+import * as Utils from './utils.ts'
 
 export class Contract {
 	public Data: CodingContractObject
@@ -38,8 +39,13 @@ export async function main(ns: NS) {
 
 function solve(ns: NS, host: string, file: string): boolean {
 	const contract = ns.codingcontract.getContract(file, host)
+	const cwd = '/managers/contract/solvers'
+	const path = `${cwd}/${Utils.GetContractTypeByName(contract.type)}`
+
+	if (!ns.fileExists(path)) {
+		return false
+	}
 
 
-
-	return false
+	return true
 }

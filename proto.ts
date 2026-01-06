@@ -1,3 +1,8 @@
 export async function main(ns: NS) {
-	// ns.print(ns.codingcontract.createDummyContract("Encryption II: Vigenère Cipher", "home"))
+	const files = ns.ls('home', '.cct')
+
+	for (const file of files) {
+		const contract = ns.codingcontract.getContract(file)
+		ns.print(`${file}: ${contract.difficulty} ${contract.type}`)
+	}
 }
