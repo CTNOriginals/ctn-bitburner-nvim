@@ -20,6 +20,26 @@ export function GetContractByType<T extends Data.KContractType>(ns: NS, type: T)
 	return null
 }
 
+export function GetDummyContract(ns: NS, type: Data.KContractType): CodingContractObject {
+	const name = Data.ContractType[type]
+	let contract: CodingContractObject | null = GetContractByType(ns, type)
+
+	if (contract != null) {
+		return contract
+	}
+
+	const file = ns.codingcontract.createDummyContract(name)
+	ns.print(`Created new contract: ${file}`)
+
+	if (!file) {
+		throw 'ContractTester: something went wront whole creating dummy file'
+	}
+
+	contract = ns.codingcontract.getContract(file)
+
+	return contract
+}
+
 export function GetSolverPath(type: Data.KContractType): string {
 	return `/managers/contract/solvers/${type}.ts`
 }
