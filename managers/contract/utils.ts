@@ -28,4 +28,41 @@ export function SolverExists(ns: NS, type: Data.KContractType): boolean {
 	return ns.fileExists(GetSolverPath(type))
 }
 
+export function FormatData(data: CodingContractObject['data']): string {
+	if (!Array.isArray(data)) {
+		return data.toString()
+	}
 
+	let str = ""
+
+	for (let i = 0; i < data.length; i++) {
+		const item = data[i]
+		if (!Array.isArray(item)) {
+			let post = ', '
+
+			if (data.length >= 10
+				&& i < data.length - 1
+				&& (i + 1) % 5 == 0
+			) {
+				post += '\n'
+			}
+
+			str += item + post
+			continue
+		} else if (i == 0) {
+			str = '\n'
+		}
+
+		str += FormatData(item)
+
+		if (i < data.length - 1) {
+			str += '\n'
+		}
+	}
+
+	if (data.length >= 10) {
+		str = str.split('\n').join('\n  ')
+		str = `\n  ${str}\n`
+	}
+	return `[ ${str}]`
+}

@@ -2,6 +2,8 @@ import { Logger } from '../../logging/index.ts'
 import * as Data from './data.ts'
 import * as Utils from './utils.ts'
 
+import * as dummy from './solvers/MinimumPathSumInATriangle.ts'
+
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
 	const logger = new Logger(ns)
@@ -32,7 +34,7 @@ export async function main(ns: NS) {
 	const submit = contract.submit(res)
 	log([
 		`-- ${type} -- `,
-		`Input: ${contract.data}`,
+		`Input: ${Utils.FormatData(contract.data)}`,
 		`Output: ${res}`,
 		`Result: ${submit}`,
 		`Remaining: ${contract.numTriesRemaining()}`
