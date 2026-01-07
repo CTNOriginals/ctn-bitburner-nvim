@@ -121,8 +121,8 @@ export class ServerController {
 		this.maxRam = ram
 	}
 
-	private getRamCost(type: Data.KBatchScript, threads: number = 1): number {
-		return this.ns.getScriptRam(this.batchScripts[type], this.hostServer.hostname) * threads
+	private log(...msg: any[]) {
+		this.ns.print(`ServerConstroller(${this.Target}): ${msg.join(' ')}`)
 	}
 
 	private getHackThreadCount(): number {
@@ -151,6 +151,18 @@ export class ServerController {
 		return Math.ceil((effect - this.security.Min) / weakenStep)
 	}
 
+	private getRamCost(type: Data.KBatchScript, threads: number = 1): number {
+		return this.ns.getScriptRam(this.batchScripts[type], this.hostServer.hostname) * threads
+	}
+	/** Returns the total ram it takes to run a full sequence */
+	private getTotalRamCost(): number {
+		let cost = 0
+		for (const type in this.batchScripts) {
+			cost += this.getRamCost(type as Data.KBatchScript)
+		}
+		return cost
+	}
+
 	private startTimeout(type: keyof Data.TBatchScript, callback: () => any) {
 		let duration = this.GetDuration(type) + this.timeGap
 		setTimeout(() => {
@@ -163,10 +175,10 @@ export class ServerController {
 		const host = this.hostServer.hostname
 
 		if (!this.ns.fileExists(file)) {
-			this.ns.tprintf(
+			this.log(this.ns.sprintf(
 				'File does not exist on this server\nFile: %s\nHost: %s',
 				file, this.ns.getHostname()
-			)
+			))
 
 			return -1
 		}
@@ -175,10 +187,10 @@ export class ServerController {
 			const copied = this.ns.scp(file, host)
 
 			if (!copied) {
-				this.ns.tprintf(
+				this.log(this.ns.sprintf(
 					'Unable to copy file to target server\nFile: %s\nHost: %s',
 					file, host
-				)
+				))
 
 				return -1
 			}
@@ -224,11 +236,15 @@ export class ServerController {
 			return
 		}
 
-		this.startCycle()
+		this.startBatchSequence()
 	}
 
-	private startCycle() {
-
+	// Hacks the target once and restoring security and money afterwards instantly
+	private startBatchSequence() {
+		const freeRam = this.ns.getServerMaxRam(this.hostServer.hostname) - this.ns.getServerUsedRam(this.hostServer.hostname)
+		if (this.getTotalRamCost() > freeRam) {
+			this
+		}
 	}
 }
 
