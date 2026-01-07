@@ -242,9 +242,13 @@ export class ServerController {
 	// Hacks the target once and restoring security and money afterwards instantly
 	private startBatchSequence() {
 		const freeRam = this.ns.getServerMaxRam(this.hostServer.hostname) - this.ns.getServerUsedRam(this.hostServer.hostname)
-		if (this.getTotalRamCost() > freeRam) {
-			this
+		const cost = this.getTotalRamCost()
+		if (cost > freeRam) {
+			this.log(`Not enough ram to run another batch sequence:\nFree: ${this.ns.format.ram(freeRam, 2)}\nNeeded: ${cost}`)
+			return
 		}
+
+		this.log(`TODO: run batch sequence...`)
 	}
 }
 
