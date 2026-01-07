@@ -86,10 +86,9 @@ export class ServerController {
 	}
 
 	public GetTotalTime(): number {
-		const server = this.GetServer()
-		return this.ns.getWeakenTime(server.hostname)
-			+ this.ns.getGrowTime(server.hostname)
-			+ this.ns.getHackTime(server.hostname)
+		return this.ns.getWeakenTime(this.Target)
+		// + this.ns.getGrowTime(server.hostname)
+		// + this.ns.getHackTime(server.hostname)
 	}
 
 	public GetScore(): number {

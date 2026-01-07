@@ -1,16 +1,14 @@
+import { Logger } from './logging/index.ts'
+import * as Worm from './hack/worm.ts'
 import * as Data from './managers/contract/data.ts'
 
 export async function main(ns: NS) {
-	const files = ns.ls('home', '.cct')
-	const descriptions: string[] = []
+	ns.disableLog('ALL')
+	const logger = new Logger(ns)
+	const log = (...msg: any[]) => logger.log(...msg)
 
-	for (const type in Data.ContractType) {
-		const name = Data.ContractType[type]
-		const file = ns.codingcontract.createDummyContract(name)!
-		const contract = ns.codingcontract.getContract(file)
-
-		descriptions.push(`---- ${(name as string).toUpperCase()} (${contract.difficulty}) ----\n\t${contract.description.split('\n').join('\n\t')}\n\n\n\n`)
-		ns.print(descriptions[descriptions.length - 1])
-		ns.rm(file)
-	}
+	await Worm.ServerWorm(ns, 'home', (server: Server) => {
+		const files = ns.ls(server.hostname, '.cct')
+		log(`${server.hostname}: ${files}`)
+	}, false, false, false)
 }
