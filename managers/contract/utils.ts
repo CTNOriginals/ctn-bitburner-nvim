@@ -48,7 +48,7 @@ export function SolverExists(ns: NS, type: Data.KContractType): boolean {
 	return ns.fileExists(GetSolverPath(type))
 }
 
-export function FormatData(data: CodingContractObject['data']): string {
+export function FormatData(data: CodingContractObject['data'] | string[]): string {
 	if (!Array.isArray(data)) {
 		return data.toString()
 	}

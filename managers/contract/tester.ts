@@ -2,7 +2,7 @@ import { Logger } from '../../logging/index.ts'
 import * as Data from './data.ts'
 import * as Utils from './utils.ts'
 
-import * as dummy from './solvers/MinimumPathSumInATriangle.ts'
+import * as dummy from './solvers/EncryptionICaesarCipher.ts'
 
 // const testData: Partial<Record<Data.KContractType, CodingContractObject['data']>> = {
 // 	AlgorithmicStockTraderI: [
@@ -33,10 +33,13 @@ export async function main(ns: NS) {
 
 	log([
 		`\n\n---- SUBMISSION ${type} ---- `,
-		`Input: ${Utils.FormatData(contract.data)}`,
-		`Output: ${res} (${t2 - t1} ms)`,
-		`Result: ${submit}`,
-		`Remaining: ${contract.numTriesRemaining()}`
+		``,
+		`Input:\t${Utils.FormatData(contract.data)}`,
+		`Output:\t${res}`,
+		``,
+		`Time:\t${t2 - t1} ms`,
+		`Result:\t${submit}`,
+		`Tries:\t${contract.numTriesRemaining()}`
 	].join('\n'))
 }
 

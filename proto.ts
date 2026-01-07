@@ -4,6 +4,7 @@ import * as Data from './managers/contract/data.ts'
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
+	ns.clearLog()
 	const logger = new Logger(ns)
 	const log = (...msg: any[]) => logger.log(...msg)
 
