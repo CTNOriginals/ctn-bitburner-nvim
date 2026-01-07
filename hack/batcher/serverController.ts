@@ -60,8 +60,12 @@ export class ServerController {
 	private security = new MinMaxSecurity(this.ns, this.Target)
 	private money = new MinMaxMoney(this.ns, this.Target)
 
-	/** The server that this script is running on */
+	/** The server will run the batches
+	 * Defaults to the server this script is running on
+	*/
 	private hostServer: Data.TServer;
+	/** The extra amount of milliseconds each timeout will spent */
+	private timeGap = 1000
 
 	constructor(
 		private ns: NS,
@@ -85,17 +89,19 @@ export class ServerController {
 		return this.ns.getServer(this.Target) as Data.TServer
 	}
 
-	public GetTotalTime(): number {
-		return this.ns.getWeakenTime(this.Target)
-		// + this.ns.getGrowTime(server.hostname)
-		// + this.ns.getHackTime(server.hostname)
+	public GetDuration(type: keyof Data.TBatchScript): number {
+		switch (type) {
+			case 'hack': return this.ns.getHackTime(this.Target)
+			case 'grow': return this.ns.getGrowTime(this.Target)
+			case 'weaken': return this.ns.getWeakenTime(this.Target)
+		}
 	}
 
 	public GetScore(): number {
 		const server = this.GetServer()
 		const growth = server.serverGrowth
 		const max = server.moneyMax
-		const time = this.GetTotalTime()
+		const time = this.GetDuration('weaken')
 
 		return (max / (100 - growth)) / time
 	}
@@ -106,13 +112,17 @@ export class ServerController {
 			`${this.Target}:${" ".repeat(18 - this.Target.length)} `,
 			`${nf(this.GetServer().moneyMax)}`,
 			`\t${this.GetServer().serverGrowth}`,
-			`\t${Math.round(this.GetTotalTime() / 1000)}`,
+			`\t${Math.round(this.GetDuration('weaken') / 1000)}`,
 			`\t= ${nf(this.GetScore(), 2)}`,
 		].join('')
 	}
 
 	public SetMaxRam(ram: number) {
 		this.maxRam = ram
+	}
+
+	private getRamCost(type: Data.KBatchScript, threads: number = 1): number {
+		return this.ns.getScriptRam(this.batchScripts[type], this.hostServer.hostname) * threads
 	}
 
 	private getHackThreadCount(): number {
@@ -125,17 +135,32 @@ export class ServerController {
 		return Math.ceil(this.ns.growthAnalyze(this.Target, growMult, this.hostServer.cpuCores))
 	}
 
-	private getWeakenThreadCount(type: Exclude<keyof Data.TBatchScript, 'weaken'>): number {
+	// private getWeakenThreadCount(type: Exclude<keyof Data.TBatchScript, 'weaken'>): number;
+	// private getWeakenThreadCount(threads: number): number;
+	private getWeakenThreadCount(type_threads: Exclude<keyof Data.TBatchScript, 'weaken'> | number): number {
 		const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
-		const effect = (type == 'hack')
-			? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
-			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, this.hostServer.cpuCores)
+		let effect = 0
+		if (typeof type_threads == 'string') {
+			effect = (type_threads == 'hack')
+				? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
+				: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, this.hostServer.cpuCores)
+		} else {
+			effect = type_threads
+		}
 
 		return Math.ceil((effect - this.security.Min) / weakenStep)
 	}
 
-	private startBatch(type: keyof Data.TBatchScript, host: string, threads: number): number {
+	private startTimeout(type: keyof Data.TBatchScript, callback: () => any) {
+		let duration = this.GetDuration(type) + this.timeGap
+		setTimeout(() => {
+			callback()
+		}, duration)
+	}
+
+	private startBatch(type: keyof Data.TBatchScript, threads: number): number {
 		const file = this.batchScripts[type]
+		const host = this.hostServer.hostname
 
 		if (!this.ns.fileExists(file)) {
 			this.ns.tprintf(
@@ -162,8 +187,16 @@ export class ServerController {
 		return this.ns.exec(file, host, { threads: threads })
 	}
 
-	private startGrow() {
+	private startHack(threads: number = this.getHackThreadCount()) {
+		this.startBatch('hack', threads)
+	}
+	private startGrow(threads: number = this.getGrowThreadCount()) {
+		this.startBatch('grow', threads)
+	}
 
+	private startWeaken(type_threads: Exclude<keyof Data.TBatchScript, 'weaken'> | number) {
+		let threads = this.getWeakenThreadCount(type_threads)
+		this.startBatch('weaken', threads)
 	}
 
 	/** Ensures that the server is maxed out before launching the first batching sequence.
@@ -176,15 +209,58 @@ export class ServerController {
 				this.money.Max / this.money.Current,
 				this.hostServer.cpuCores
 			))
-			this.getGrowThreadCount()
-			this.ns.getGrowTime()
-		}
 
+			this.startGrow(growThreads)
+			this.startTimeout('grow', this.Initialize)
+			return
+		}
 
 		if (!this.security.IsMin()) {
 			const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
 			const weakenThreads = Math.ceil((this.security.Current - this.security.Min) / weakenStep)
+
+			this.startWeaken(weakenThreads)
+			this.startTimeout('weaken', this.Initialize)
+			return
 		}
+
+		this.startCycle()
+	}
+
+	private startCycle() {
+
 	}
 }
+
+/** 
+			  |Hack=|
+|=Weaken=============|
+	 |=Grow===========|
+  |=Weaken=============|
+				  |Hack=|
+	|=Weaken=============|
+		 |=Grow===========|
+	  |=Weaken=============|
+					  |Hack=|
+		|=Weaken=============|
+			 |=Grow===========|
+		  |=Weaken=============|
+						  |Hack=|
+			|=Weaken=============|
+				 |=Grow===========|
+			  |=Weaken=============|
+*
+|=Weaken=============|
+  |=Weaken=============|
+	|=Weaken=============|
+	 |=Grow===========|
+	  |=Weaken=============|
+		|=Weaken=============|
+		 |=Grow===========|
+		  |=Weaken=============|
+			 |=Grow===========|
+			  |Hack=|
+				  |Hack=|
+					  |Hack=|
+*/
 
