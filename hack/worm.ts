@@ -5,7 +5,7 @@ import { Logger } from '../logging/index.ts'
 export async function ServerWorm(
 	ns: NS,
 	host: string,
-	func: (server: Server, parent: string) => void | Promise<void>,
+	func: (server: Required<Server>, parent: string) => void | Promise<void>,
 	requireRoot: boolean = true,
 	tryGetRoot: boolean = true,
 	skipHome: boolean = true,

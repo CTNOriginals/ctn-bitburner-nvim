@@ -132,7 +132,7 @@ export class ServerController {
 	}
 
 	private log(...msg: any[]) {
-		this.ns.print(`${this.Target}: ${msg.join(' ')}`)
+		this.ns.print(`${this.Target}:${' '.repeat(18 - this.Target.length)} ${msg.join(' ').split('\n').join('\n' + ' '.repeat(21))}`)
 	}
 
 	private getHackThreadCount(): number {
@@ -144,7 +144,7 @@ export class ServerController {
 		const growMult = this.money.Max / (this.money.Max * this.hackPercent)
 
 		// this.log(`threds: (${this.security.Min} - ${effect}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
-		return Math.ceil(this.ns.growthAnalyze(this.Target, growMult, 1))
+		return Math.ceil(this.ns.growthAnalyze(this.Target, growMult, this.hostServer.cpuCores))
 	}
 
 	// private getWeakenThreadCount(type: Exclude<keyof Data.TBatchScript, 'weaken'>): number;
@@ -153,7 +153,7 @@ export class ServerController {
 		const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
 		let effect = (type_threads == 'hack')
 			? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
-			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, 1)
+			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, this.hostServer.cpuCores)
 
 		// this.log(`threds: (${this.security.Min} - ${effect}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
 		return Math.ceil((this.security.Min - effect) / weakenStep)
@@ -165,10 +165,17 @@ export class ServerController {
 	/** Returns the total ram it takes to run a full sequence */
 	private getTotalRamCost(): number {
 		let cost = 0
-		for (const type in this.batchScripts) {
-			cost += this.getRamCost(type as Data.KBatchScript)
-		}
+
+		cost += this.getRamCost('hack', this.getHackThreadCount())
+		cost += this.getRamCost('weaken', this.getWeakenThreadCount('hack'))
+		cost += this.getRamCost('grow', this.getGrowThreadCount())
+		cost += this.getRamCost('weaken', this.getWeakenThreadCount('grow'))
+
 		return cost
+	}
+
+	private getAvailableRam(): number {
+		return this.ns.getServerMaxRam(this.hostServer.hostname) - this.ns.getServerUsedRam(this.hostServer.hostname)
 	}
 
 	private async startTimeout(type_time: Data.KBatchScript | number, callback: (...any: any[]) => any, ...args: any[]) {
@@ -184,6 +191,11 @@ export class ServerController {
 	private startBatch(type: keyof Data.TBatchScript, threads: number): number {
 		const file = this.batchScripts[type]
 		const host = this.hostServer.hostname
+
+		if (threads <= 0) {
+			this.log(`Cant start a batch with less then 1 thread: ${threads}`)
+			return -1
+		}
 
 		if (!this.ns.fileExists(file)) {
 			this.log(this.ns.sprintf(
@@ -231,12 +243,19 @@ export class ServerController {
 		// this.log(this.money.String(this.ns))
 		// this.log(this.security.String(this.ns))
 
+		const validateThreads = (type: Data.KBatchScript, threads: number): number => {
+			const ram = this.getRamCost(type)
+			const free = this.getAvailableRam()
+			return threads - (Math.max((ram * threads) - free, 0) / threads)
+		}
+
 		if (!this.money.IsMax()) {
-			const growThreads = Math.ceil(this.ns.growthAnalyze(
+			let growThreads = Math.ceil(this.ns.growthAnalyze(
 				this.Target,
 				this.money.Max / this.money.Current,
 				this.hostServer.cpuCores
 			))
+			growThreads = validateThreads('grow', growThreads)
 
 			this.log(`Initial growth: ${this.money.String(this.ns)} - threads: ${growThreads}`)
 
@@ -247,7 +266,8 @@ export class ServerController {
 
 		if (!this.security.IsMin()) {
 			const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
-			const weakenThreads = Math.ceil((this.security.Current - this.security.Min) / weakenStep)
+			let weakenThreads = Math.ceil((this.security.Current - this.security.Min) / weakenStep)
+			weakenThreads = validateThreads('weaken', weakenThreads)
 
 			this.log(`Initial weaken: ${this.security.String(this.ns)} - threads: ${weakenThreads}`)
 
@@ -262,13 +282,19 @@ export class ServerController {
 
 	// Hacks the target once and restoring security and money afterwards instantly
 	private async startBatchSequence() {
-		const freeRam = this.ns.getServerMaxRam(this.hostServer.hostname) - this.ns.getServerUsedRam(this.hostServer.hostname)
+		const space = this.ns.getServerMaxRam(this.hostServer.hostname)
+		const freeRam = this.getAvailableRam()
 		const cost = this.getTotalRamCost()
-		this.log(`TODO: Reserve ram: ${this.ns.format.ram(cost, 2)}`)
-		if (cost > freeRam) {
-			this.log(`Not enough ram to run another batch sequence:\nFree: ${this.ns.format.ram(freeRam, 2)}\nNeeded: ${cost}`)
+		if (cost > space) {
+			this.log(`Not enough ram to run batch sequence:\nTotal Space: ${this.ns.format.ram(freeRam, 2)}\nNeeded: ${cost}`)
 			return
+		} else if (cost > freeRam) {
+			while (cost > this.getAvailableRam()) {
+				await this.ns.asleep(1000)
+			}
 		}
+
+		this.log(`TODO: Reserve ram: ${this.ns.format.ram(cost, 2)}`)
 
 
 		// we want to hack
@@ -307,6 +333,8 @@ export class ServerController {
 
 		this.startTimeout(weakDelay, this.startWeaken, 'grow')
 		this.startTimeout(weakTotal, this.log, `done: weak(grow)`)
+
+		this.startTimeout(weakTotal + 1000, this.Initialize)
 	}
 }
 

@@ -4,20 +4,34 @@ import { ServerController } from './serverController.ts'
 import * as Data from './data.ts'
 
 const testHosts: string[] = [
-	'phantasy'
+	// 'phantasy',
+]
+const testBlacklist: string[] = [
+	// 'foodnstuff',
+	// 'sigma-cosmetics',
 ]
 
 export async function main(ns: NS) {
 	ns.disableLog('ALL')
+	ns.clearLog()
 	const logger = new Logger(ns)
 	const log = (...msg: any[]) => logger.log(...msg)
+
+	for (const [_key, ps] of ns.ps().entries()) {
+		if (Object.values(Data.BatchScripts).includes(ps.filename)) {
+			ns.kill(ps.pid)
+		}
+	}
 
 	const host = ns.getHostname()
 	const controllers: Data.THostMap<ServerController> = {}
 	const hostList: string[] = []
 
 	await Worm.ServerWorm(ns, host, (server: Server) => {
-		if (testHosts.length != 0 && !testHosts.includes(server.hostname)) {
+		if (testBlacklist.includes(server.hostname)
+			|| testHosts.length != 0
+			&& !testHosts.includes(server.hostname)
+		) {
 			return
 		}
 
@@ -31,7 +45,7 @@ export async function main(ns: NS) {
 		hostList.push(server.hostname)
 	})
 
-	hostList.sort((a, b) => { return controllers[b].GetScore() - controllers[a].GetScore() })
+	hostList.sort((a, b) => { return controllers[a].GetScore() - controllers[b].GetScore() })
 
 	let totalScore = 0
 	const serverScores: { [host: string]: number } = {}
@@ -65,6 +79,7 @@ export async function main(ns: NS) {
 		// await ns.hack(server.hostname)
 
 		controller.Initialize()
+		await ns.asleep(100)
 	}
 
 	while (true) {
