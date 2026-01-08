@@ -1,7 +1,4 @@
 export function main(ns: NS) {
-	var x = 0;
-	ns.tprint("hello" + x)
-
 	var host = (ns.args.length > 0) ? ns.args[0] as string : "home"
 
 	var secLevel = ns.getServerSecurityLevel(host)
@@ -12,5 +9,6 @@ export function main(ns: NS) {
 
 	var growth = ns.getServerGrowth(host)
 
-	ns.tprintf("money: %f\nsec: %f.2/%f.2\ngrowth: %f.2/%f.2", money, secLevel, maxSec, growth, maxMoney)
+	let msg = ns.sprintf("\n\n\ngrowth: %.2f\nsec: %.2f/%.2f\nmoney: %s/%s", growth, secLevel, maxSec, ns.format.number(money), ns.format.number(maxMoney))
+	ns.tprint(msg)
 }

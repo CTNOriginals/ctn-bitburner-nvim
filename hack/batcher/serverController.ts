@@ -32,6 +32,16 @@ export class MinMaxGetter {
 	public IsMax(): boolean {
 		return this.DiffMax() == 0
 	}
+
+	public String(ns: NS): string {
+		const nf = ns.format.number
+		return ns.sprintf(
+			'%s / %s / %s',
+			nf(this.Min),
+			nf(this.Current),
+			nf(this.Max)
+		)
+	}
 }
 
 export class MinMaxSecurity extends MinMaxGetter {
@@ -122,7 +132,7 @@ export class ServerController {
 	}
 
 	private log(...msg: any[]) {
-		this.ns.print(`ServerConstroller(${this.Target}): ${msg.join(' ')}`)
+		this.ns.print(`${this.Target}: ${msg.join(' ')}`)
 	}
 
 	private getHackThreadCount(): number {
@@ -148,7 +158,8 @@ export class ServerController {
 			effect = type_threads
 		}
 
-		return Math.ceil((effect - this.security.Min) / weakenStep)
+		// this.log(`threds: (${this.security.Min} - ${effect}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
+		return Math.ceil((this.security.Min - effect) / weakenStep)
 	}
 
 	private getRamCost(type: Data.KBatchScript, threads: number = 1): number {
@@ -163,8 +174,13 @@ export class ServerController {
 		return cost
 	}
 
-	private startTimeout(type: keyof Data.TBatchScript, callback: () => any) {
+	private startTimeout(type: keyof Data.TBatchScript, callback: () => any, bindThis: boolean = true) {
 		let duration = this.GetDuration(type) + this.timeGap
+
+		if (bindThis) {
+			callback = callback.bind(this)
+		}
+
 		setTimeout(() => {
 			callback()
 		}, duration)
@@ -196,7 +212,7 @@ export class ServerController {
 			}
 		}
 
-		return this.ns.exec(file, host, { threads: threads })
+		return this.ns.exec(file, host, { threads: threads }, this.Target)
 	}
 
 	private startHack(threads: number = this.getHackThreadCount()) {
@@ -222,6 +238,8 @@ export class ServerController {
 				this.hostServer.cpuCores
 			))
 
+			this.log(`Initial growth: ${this.money.String(this.ns)} - threads: ${growThreads}`)
+
 			this.startGrow(growThreads)
 			this.startTimeout('grow', this.Initialize)
 			return
@@ -231,11 +249,14 @@ export class ServerController {
 			const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
 			const weakenThreads = Math.ceil((this.security.Current - this.security.Min) / weakenStep)
 
+			this.log(`Initial weaken: ${this.security.String(this.ns)} - threads: ${weakenThreads}`)
+
 			this.startWeaken(weakenThreads)
 			this.startTimeout('weaken', this.Initialize)
 			return
 		}
 
+		this.log(`Initialization finished, starting batch sequence`)
 		this.startBatchSequence()
 	}
 

@@ -7,3 +7,9 @@ export type TBatchScript = {
 	weaken: string,
 }
 export type KBatchScript = keyof TBatchScript
+
+export const BatchScripts: TBatchScript = {
+	hack: 'hack/batcher/scripts/hack.ts',
+	grow: 'hack/batcher/scripts/grow.ts',
+	weaken: 'hack/batcher/scripts/weaken.ts',
+}
