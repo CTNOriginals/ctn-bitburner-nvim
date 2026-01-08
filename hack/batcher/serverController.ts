@@ -75,7 +75,7 @@ export class ServerController {
 	*/
 	private hostServer: Data.TServer;
 	/** The extra amount of milliseconds each timeout will spent */
-	private timeGap = 1000
+	private timeGap = 100
 
 	constructor(
 		private ns: NS,
@@ -142,21 +142,18 @@ export class ServerController {
 
 	private getGrowThreadCount(): number {
 		const growMult = this.money.Max / (this.money.Max * this.hackPercent)
-		return Math.ceil(this.ns.growthAnalyze(this.Target, growMult, this.hostServer.cpuCores))
+
+		// this.log(`threds: (${this.security.Min} - ${effect}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
+		return Math.ceil(this.ns.growthAnalyze(this.Target, growMult, 1))
 	}
 
 	// private getWeakenThreadCount(type: Exclude<keyof Data.TBatchScript, 'weaken'>): number;
 	// private getWeakenThreadCount(threads: number): number;
-	private getWeakenThreadCount(type_threads: Exclude<keyof Data.TBatchScript, 'weaken'> | number): number {
+	private getWeakenThreadCount(type_threads: Exclude<keyof Data.TBatchScript, 'weaken'>): number {
 		const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
-		let effect = 0
-		if (typeof type_threads == 'string') {
-			effect = (type_threads == 'hack')
-				? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
-				: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, this.hostServer.cpuCores)
-		} else {
-			effect = type_threads
-		}
+		let effect = (type_threads == 'hack')
+			? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
+			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, 1)
 
 		// this.log(`threds: (${this.security.Min} - ${effect}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
 		return Math.ceil((this.security.Min - effect) / weakenStep)
@@ -174,16 +171,14 @@ export class ServerController {
 		return cost
 	}
 
-	private startTimeout(type: keyof Data.TBatchScript, callback: () => any, bindThis: boolean = true) {
-		let duration = this.GetDuration(type) + this.timeGap
+	private async startTimeout(type_time: Data.KBatchScript | number, callback: (...any: any[]) => any, ...args: any[]) {
+		const time = (typeof type_time == 'number') ? type_time : this.GetDuration(type_time) + this.timeGap
 
-		if (bindThis) {
-			callback = callback.bind(this)
-		}
+		callback = callback.bind(this)
 
 		setTimeout(() => {
-			callback()
-		}, duration)
+			callback(...args)
+		}, time)
 	}
 
 	private startBatch(type: keyof Data.TBatchScript, threads: number): number {
@@ -212,6 +207,8 @@ export class ServerController {
 			}
 		}
 
+		this.log(`Starting batch: ${type}, ${threads}`)
+
 		return this.ns.exec(file, host, { threads: threads }, this.Target)
 	}
 
@@ -223,7 +220,7 @@ export class ServerController {
 	}
 
 	private startWeaken(type_threads: Exclude<keyof Data.TBatchScript, 'weaken'> | number) {
-		let threads = this.getWeakenThreadCount(type_threads)
+		let threads = (typeof type_threads == 'number') ? type_threads : this.getWeakenThreadCount(type_threads)
 		this.startBatch('weaken', threads)
 	}
 
@@ -231,6 +228,9 @@ export class ServerController {
 	 * Once the server is maxed, this function will automatically start batching.
 	*/
 	public async Initialize() {
+		// this.log(this.money.String(this.ns))
+		// this.log(this.security.String(this.ns))
+
 		if (!this.money.IsMax()) {
 			const growThreads = Math.ceil(this.ns.growthAnalyze(
 				this.Target,
@@ -261,15 +261,52 @@ export class ServerController {
 	}
 
 	// Hacks the target once and restoring security and money afterwards instantly
-	private startBatchSequence() {
+	private async startBatchSequence() {
 		const freeRam = this.ns.getServerMaxRam(this.hostServer.hostname) - this.ns.getServerUsedRam(this.hostServer.hostname)
 		const cost = this.getTotalRamCost()
+		this.log(`TODO: Reserve ram: ${this.ns.format.ram(cost, 2)}`)
 		if (cost > freeRam) {
 			this.log(`Not enough ram to run another batch sequence:\nFree: ${this.ns.format.ram(freeRam, 2)}\nNeeded: ${cost}`)
 			return
 		}
 
-		this.log(`TODO: run batch sequence...`)
+
+		// we want to hack
+		// after hack we need to restore sec and grow
+		// we need to grow after hack
+		// to make grow finish faster we need to first weaken the effect of hack
+
+		const hackTime = this.GetDuration('hack')
+		const growTime = this.GetDuration('grow')
+		const weakTime = this.GetDuration('weaken')
+
+		const hackDelay = weakTime - hackTime - (this.timeGap * 2)
+		const growDelay = weakTime - growTime + this.timeGap
+		const weakDelay = this.timeGap * 3
+
+		const hackTotal = hackDelay + hackTime
+		const growTotal = growDelay + growTime
+		const weakTotal = weakDelay + weakTime
+
+		this.log([
+			`Batcher schadule:`,
+			this.ns.sprintf(`hack: %.2f -> %.2f = %.2f`, hackDelay / 1000, hackTime / 1000, hackTotal / 1000),
+			this.ns.sprintf(`weak: %.2f -> %.2f = %.2f`, 0, weakTime / 1000, weakTime / 1000),
+			this.ns.sprintf(`grow: %.2f -> %.2f = %.2f`, growDelay / 1000, growTime / 1000, growTotal / 1000),
+			this.ns.sprintf(`weak: %.2f -> %.2f = %.2f`, weakDelay / 1000, weakTime / 1000, weakTotal / 1000),
+		].join('\n'))
+
+		this.startTimeout(hackDelay, this.startHack)
+		this.startTimeout(hackTotal, this.log, `done: hack`)
+
+		this.startTimeout(0, this.startWeaken, 'hack')
+		this.startTimeout(weakTime, this.log, `done: weak(hack)`)
+
+		this.startTimeout(growDelay, this.startGrow)
+		this.startTimeout(growTotal, this.log, `done: grow`)
+
+		this.startTimeout(weakDelay, this.startWeaken, 'grow')
+		this.startTimeout(weakTotal, this.log, `done: weak(grow)`)
 	}
 }
 

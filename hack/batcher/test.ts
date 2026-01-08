@@ -62,14 +62,9 @@ export async function main(ns: NS) {
 			` \t(${ns.format.percent(((score / totalScore)))})`,
 		].join(''))
 
-		await ns.hack(server.hostname)
+		// await ns.hack(server.hostname)
 
-
-		try {
-			controller.Initialize()
-		} catch (e: any) {
-			log(e)
-		}
+		controller.Initialize()
 	}
 
 	while (true) {
