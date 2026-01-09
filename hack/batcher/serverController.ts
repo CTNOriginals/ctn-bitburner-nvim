@@ -77,19 +77,20 @@ export class ServerController {
 	/** The extra amount of milliseconds each timeout will spent */
 	private timeGap = 100
 
+	private hackPercent: number = 0.5
+
 	constructor(
 		private ns: NS,
 		public Target: string,
-		private hackPercent: number,
+		private maxHackPercent: number,
 		private batchScripts: Data.TBatchScript,
 	) {
-		if (hackPercent <= 0 || hackPercent > 1) {
+		if (maxHackPercent <= 0 || maxHackPercent > 1) {
 			ns.tprint([
 				`ServerConstroller(${Target}) hackPercent expects a value between > 0 and 1`,
-				`but received ${hackPercent}.`,
-				`The value will be set to 0.5.`
+				`but received ${maxHackPercent}.`,
+				`The default will remain: 0.5.`
 			].join(' '))
-			this.hackPercent = 0.5
 		}
 
 		this.hostServer = ns.getServer(ns.getHostname()) as Data.TServer
@@ -144,7 +145,7 @@ export class ServerController {
 		const growMult = this.money.Max / (this.money.Max * this.hackPercent)
 
 		// this.log(`threds: (${this.security.Min} - ${effect}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
-		return Math.ceil(this.ns.growthAnalyze(this.Target, growMult, this.hostServer.cpuCores))
+		return Math.ceil(this.ns.growthAnalyze(this.Target, growMult, 1))// this.hostServer.cpuCores))
 	}
 
 	// private getWeakenThreadCount(type: Exclude<keyof Data.TBatchScript, 'weaken'>): number;
@@ -153,7 +154,7 @@ export class ServerController {
 		const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
 		let effect = (type_threads == 'hack')
 			? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
-			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, this.hostServer.cpuCores)
+			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, 1) // this.hostServer.cpuCores)
 
 		// this.log(`threds: (${this.security.Min} - ${effect}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
 		return Math.ceil((this.security.Min - effect) / weakenStep)
@@ -249,15 +250,17 @@ export class ServerController {
 			return threads - (Math.max((ram * threads) - free, 0) / threads)
 		}
 
+
+		this.log(this.money.String(this.ns))
 		if (!this.money.IsMax()) {
 			let growThreads = Math.ceil(this.ns.growthAnalyze(
 				this.Target,
-				this.money.Max / this.money.Current,
+				this.money.Max / Math.max(this.money.Current, 1),
 				this.hostServer.cpuCores
 			))
 			growThreads = validateThreads('grow', growThreads)
 
-			this.log(`Initial growth: ${this.money.String(this.ns)} - threads: ${growThreads}`)
+			this.log(`Initial growth: ${this.money.String(this.ns)}\nthreads: ${growThreads}`)
 
 			this.startGrow(growThreads)
 			this.startTimeout('grow', this.Initialize)
@@ -269,7 +272,7 @@ export class ServerController {
 			let weakenThreads = Math.ceil((this.security.Current - this.security.Min) / weakenStep)
 			weakenThreads = validateThreads('weaken', weakenThreads)
 
-			this.log(`Initial weaken: ${this.security.String(this.ns)} - threads: ${weakenThreads}`)
+			this.log(`Initial weaken: ${this.security.String(this.ns)}\nthreads: ${weakenThreads}`)
 
 			this.startWeaken(weakenThreads)
 			this.startTimeout('weaken', this.Initialize)

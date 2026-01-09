@@ -5,6 +5,14 @@ import * as Data from './data.ts'
 
 const testHosts: string[] = [
 	// 'phantasy',
+	// 'netlink',
+	// 'vitalife',
+	// 'omnitek',
+	// 'rho-construction',
+	// 'helios',
+	// 'silver-helix',
+	// 'lexo-corp',
+	// 'fulcrumtech',
 ]
 const testBlacklist: string[] = [
 	// 'foodnstuff',
@@ -75,9 +83,16 @@ export async function main(ns: NS) {
 			`${controller.GetInfoString()}`,
 			` \t(${ns.format.percent(((score / totalScore)))})`,
 		].join(''))
+	}
 
-		// await ns.hack(server.hostname)
+	await ns.asleep(1000)
 
+	for (const host of hostList) {
+		// if (!serverScores[host]) {
+		// 	continue
+		// }
+
+		const controller = controllers[host]
 		controller.Initialize()
 		await ns.asleep(100)
 	}
