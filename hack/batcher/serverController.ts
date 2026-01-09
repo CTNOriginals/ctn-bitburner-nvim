@@ -96,6 +96,53 @@ export class ServerController {
 		this.hostServer = ns.getServer(ns.getHostname()) as Data.TServer
 	}
 
+	private fn(n: number): string {
+		return this.ns.format.number(n)
+	}
+	private fp(n: number): string {
+		return this.ns.format.percent(n)
+	}
+	private fr(n: number): string {
+		return this.ns.format.ram(n)
+	}
+
+	private recalculateHackPercent() {
+		// single assumes a single hack thread effect value
+		const singleMon = this.ns.hackAnalyze(this.hostServer.hostname)
+		const singlePer = singleMon / this.money.Max
+		const singleRam = this.getRamCost('hack')
+
+		// this.getTotalRamCost()
+		const tmp = this.hackPercent
+		this.hackPercent = singlePer
+		const singleSeqRam = this.getTotalRamCost()
+		this.hackPercent = tmp
+
+		this.log(singleMon, singlePer, (singleSeqRam))
+
+		const percent = singleRam / singleSeqRam
+		const maxSeq = this.maxRam / singleSeqRam
+		const maxHack = maxSeq * percent
+		const maxThreads = maxHack / singleRam
+
+		this.log(`${this.fr(maxSeq)} * ${this.fp(percent)} = ${this.fr(maxHack)} = ${this.fn(maxThreads)}`)
+		// this.log(`${(maxSeq)} * ${(percent)} = ${(maxHack)} = ${(maxThreads)}`)
+
+
+		// this.ns.hackAnalyzeThreads
+
+		// const total = this.getTotalRamCost()
+		// const hackRam = this.getRamCost('hack', this.getHackThreadCount())
+		// const percent = hackRam / total
+
+		// const ram = singleRam * (total * percent)
+		// const threads = ram / this.getRamCost('hack')
+
+		// this.log(`ram ratio: ${this.fr(hackRam)} / ${this.fr(total)} = ${this.fp(percent)}`)
+		// this.log(`${this.fr(ram)} / ${this.fr(singleRam)} = ${this.fn(threads)}`)
+
+	}
+
 	public GetServer(): Data.TServer {
 		return this.ns.getServer(this.Target) as Data.TServer
 	}
@@ -130,34 +177,39 @@ export class ServerController {
 
 	public SetMaxRam(ram: number) {
 		this.maxRam = ram
+		this.recalculateHackPercent()
 	}
 
 	private log(...msg: any[]) {
 		this.ns.print(`${this.Target}:${' '.repeat(18 - this.Target.length)} ${msg.join(' ').split('\n').join('\n' + ' '.repeat(21))}`)
 	}
 
+	private gettTargetMoney(): number {
+		// this.log(`normal: ${this.fn(this.money.Max * this.hackPercent)}`)
+		// this.log(`min: ${this.fn(this.money.Current * this.maxHackPercent)}`)
+		return Math.min(this.money.Max * this.hackPercent, this.money.Current * this.maxHackPercent)
+	}
+
 	private getHackThreadCount(): number {
-		const targetMoney = this.money.Max * this.hackPercent
-		return Math.ceil(this.ns.hackAnalyzeThreads(this.Target, targetMoney))
+		return (this.ns.hackAnalyzeThreads(this.Target, this.gettTargetMoney()))
 	}
 
 	private getGrowThreadCount(): number {
-		const growMult = this.money.Max / (this.money.Max * this.hackPercent)
+		const growMult = this.money.Max / (this.money.Max - this.gettTargetMoney())
+		const threads = this.ns.growthAnalyze(this.Target, growMult, 1)// this.hostServer.cpuCores))
 
-		// this.log(`threds: (${this.security.Min} - ${effect}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
-		return Math.ceil(this.ns.growthAnalyze(this.Target, growMult, 1))// this.hostServer.cpuCores))
+		// this.log(`${this.fn(this.money.Max)} / (${this.fn(this.money.Max - this.gettTargetMoney())}) = ${this.fn(growMult)} = ${this.fn(threads)}`)
+		return (threads)
 	}
 
-	// private getWeakenThreadCount(type: Exclude<keyof Data.TBatchScript, 'weaken'>): number;
-	// private getWeakenThreadCount(threads: number): number;
 	private getWeakenThreadCount(type_threads: Exclude<keyof Data.TBatchScript, 'weaken'>): number {
 		const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
 		let effect = (type_threads == 'hack')
 			? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
 			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, 1) // this.hostServer.cpuCores)
 
-		// this.log(`threds: (${this.security.Min} - ${effect}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
-		return Math.ceil((this.security.Min - effect) / weakenStep)
+		// this.log(`threds: (${this.security.Min} - (${this.security.Min} - ${effect})) / ${weakenStep} = ${(this.security.Min - Math.abs(this.security.Min - effect)) / weakenStep}`)
+		return ((this.security.Min - Math.abs(this.security.Min - effect)) / weakenStep)
 	}
 
 	private getRamCost(type: Data.KBatchScript, threads: number = 1): number {
@@ -165,14 +217,18 @@ export class ServerController {
 	}
 	/** Returns the total ram it takes to run a full sequence */
 	private getTotalRamCost(): number {
-		let cost = 0
+		let ram = 0
 
-		cost += this.getRamCost('hack', this.getHackThreadCount())
-		cost += this.getRamCost('weaken', this.getWeakenThreadCount('hack'))
-		cost += this.getRamCost('grow', this.getGrowThreadCount())
-		cost += this.getRamCost('weaken', this.getWeakenThreadCount('grow'))
+		ram += this.getRamCost('hack', this.getHackThreadCount())
+		// this.log(`hack: ${(ram)}`)
+		ram += this.getRamCost('weaken', this.getWeakenThreadCount('hack'))
+		// this.log(`weak: ${(this.getRamCost('weaken', this.getWeakenThreadCount('hack')))}`)
+		ram += this.getRamCost('grow', this.getGrowThreadCount())
+		// this.log(`grow: ${(this.getRamCost('grow', this.getGrowThreadCount()))}`)
+		ram += this.getRamCost('weaken', this.getWeakenThreadCount('grow'))
+		// this.log(`weak: ${(this.getRamCost('weaken', this.getWeakenThreadCount('grow')))}`)
 
-		return cost
+		return ram
 	}
 
 	private getAvailableRam(): number {
@@ -194,7 +250,7 @@ export class ServerController {
 		const host = this.hostServer.hostname
 
 		if (threads <= 0) {
-			this.log(`Cant start a batch with less then 1 thread: ${threads}`)
+			this.log(`Cant start a batch with < 0 threads: ${threads}`)
 			return -1
 		}
 
@@ -250,8 +306,6 @@ export class ServerController {
 			return threads - (Math.max((ram * threads) - free, 0) / threads)
 		}
 
-
-		this.log(this.money.String(this.ns))
 		if (!this.money.IsMax()) {
 			let growThreads = Math.ceil(this.ns.growthAnalyze(
 				this.Target,
@@ -260,7 +314,7 @@ export class ServerController {
 			))
 			growThreads = validateThreads('grow', growThreads)
 
-			this.log(`Initial growth: ${this.money.String(this.ns)}\nthreads: ${growThreads}`)
+			this.log(`Initial growth: ${this.money.String(this.ns)}`)
 
 			this.startGrow(growThreads)
 			this.startTimeout('grow', this.Initialize)
@@ -272,7 +326,7 @@ export class ServerController {
 			let weakenThreads = Math.ceil((this.security.Current - this.security.Min) / weakenStep)
 			weakenThreads = validateThreads('weaken', weakenThreads)
 
-			this.log(`Initial weaken: ${this.security.String(this.ns)}\nthreads: ${weakenThreads}`)
+			this.log(`Initial weaken: ${this.security.String(this.ns)}`)
 
 			this.startWeaken(weakenThreads)
 			this.startTimeout('weaken', this.Initialize)
@@ -340,36 +394,4 @@ export class ServerController {
 		this.startTimeout(weakTotal + 1000, this.Initialize)
 	}
 }
-
-/** 
-			  |Hack=|
-|=Weaken=============|
-	 |=Grow===========|
-  |=Weaken=============|
-				  |Hack=|
-	|=Weaken=============|
-		 |=Grow===========|
-	  |=Weaken=============|
-					  |Hack=|
-		|=Weaken=============|
-			 |=Grow===========|
-		  |=Weaken=============|
-						  |Hack=|
-			|=Weaken=============|
-				 |=Grow===========|
-			  |=Weaken=============|
-*
-|=Weaken=============|
-  |=Weaken=============|
-	|=Weaken=============|
-	 |=Grow===========|
-	  |=Weaken=============|
-		|=Weaken=============|
-		 |=Grow===========|
-		  |=Weaken=============|
-			 |=Grow===========|
-			  |Hack=|
-				  |Hack=|
-					  |Hack=|
-*/
 

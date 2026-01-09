@@ -1,7 +1,5 @@
 import { Logger } from '../logging/index.ts'
 
-
-
 export async function ServerWorm(
 	ns: NS,
 	host: string,
@@ -41,7 +39,7 @@ export async function ServerWorm(
 		}
 
 		// Get the server again to make sure the data is up to date
-		await func(ns.getServer(sub), host)
+		await func(ns.getServer(sub) as Required<Server>, host)
 		children.push(sub)
 		// await ServerWorm(ns, sub, func, tryGetRoot, requireRoot, skipHome, seen)
 
@@ -56,7 +54,7 @@ export async function ServerWorm(
 	}
 
 	for (const child of children) {
-		await ServerWorm(ns, child, func, tryGetRoot, requireRoot, skipHome, seen)
+		await ServerWorm(ns, child, func, requireRoot, tryGetRoot, skipHome, seen)
 	}
 }
 
