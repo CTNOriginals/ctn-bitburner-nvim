@@ -167,18 +167,18 @@ export class ServerController {
 
 	private getGrowThreadCount(): number {
 		const growMult = this.money.Max / (this.money.Max - this.gettTargetMoney())
-		const threads = this.ns.growthAnalyze(this.Target, growMult, 1)// this.hostServer.cpuCores))
+		const threads = this.ns.growthAnalyze(this.Target, growMult, this.hostServer.cpuCores)
 
 		// this.log(this.gettTargetMoney())
 		// this.log(`${this.fn(this.money.Max)} / (${this.fn(this.money.Max - this.gettTargetMoney())}) = ${this.fn(growMult)} = ${this.fn(threads)}`)
 		return (threads)
 	}
 
-	private getWeakenThreadCount(type_threads: Exclude<keyof Data.TBatchScript, 'weaken'>): number {
+	private getWeakenThreadCount(type: Exclude<keyof Data.TBatchScript, 'weaken'>): number {
 		const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
-		let effect = (type_threads == 'hack')
+		let effect = (type == 'hack')
 			? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
-			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, 1) // this.hostServer.cpuCores)
+			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, this.hostServer.cpuCores)
 
 		// this.log(`threds: (${this.security.Min} - (${this.security.Min} - ${this.fn(effect)})) / ${weakenStep} = ${(this.security.Min - Math.abs(this.security.Min - effect)) / weakenStep}`)
 		return ((this.security.Min - Math.abs(this.security.Min - effect)) / weakenStep)
@@ -218,24 +218,39 @@ export class ServerController {
 
 		this.hackPercent = singleHackPercent
 
-		const singleSeqRam = this.getTotalRamCost(false)
-		const minSeqRam = this.getTotalRamCost(true)
+		const threadCounts: [Data.KBatchScript, number][] = [
+			['hack', this.getHackThreadCount()],
+			['weaken', this.getWeakenThreadCount('hack')],
+			['grow', this.getGrowThreadCount()],
+			['weaken', this.getWeakenThreadCount('grow')],
+		]
 
-		const mult = minSeqRam / singleSeqRam
-		const seqRam = singleSeqRam * mult
-		const maxSeq = this.getAvailableRam() / seqRam
+		let lowestKey: Data.KBatchScript = 'weaken'
+		let lowestVal = -1
 
-		this.log(`${singleSeqRam} * ${this.fn(mult)} = ${(seqRam)} = ${this.fn(maxSeq)}`)
+		for (const pair of threadCounts) {
+			const key = pair[0]
+			const val = pair[1]
 
-		const singleHackRam = this.getRamCost('hack', this.getHackThreadCount())
-		const hackRamPercent = singleHackRam / singleSeqRam
+			if (lowestVal == -1 || val < lowestVal) {
+				lowestKey = key
+				lowestVal = val
+			}
+		}
 
-		this.log(`${singleHackRam} * ${singleSeqRam} = ${hackRamPercent}`)
+		// this.log(`${lowestKey}: ${lowestVal}`)
 
-		this.log(`hack: ${this.getHackThreadCount() * mult}`)
-		this.log(`weak: ${this.getWeakenThreadCount('hack') * mult}`)
-		this.log(`grow: ${this.getGrowThreadCount() * mult}`)
-		this.log(`weak: ${this.getWeakenThreadCount('grow') * mult}`)
+		const minRam = this.getRamCost(lowestKey)
+		const mult = minRam / lowestVal
+
+		this.hackPercent = singleHackPercent * mult
+
+		// this.log(`${this.fr(minRam)} / ${lowestVal} = ${this.fn(mult)} = ${this.hackPercent}`)
+		//
+		// this.log(`hack: ${this.getHackThreadCount()}`)
+		// this.log(`weak: ${this.getWeakenThreadCount('hack')}`)
+		// this.log(`grow: ${this.getGrowThreadCount()}`)
+		// this.log(`weak: ${this.getWeakenThreadCount('grow')}`)
 	}
 
 	private async startTimeout(type_time: Data.KBatchScript | number, callback: (...any: any[]) => any, ...args: any[]) {
@@ -287,7 +302,7 @@ export class ServerController {
 		}
 
 		threads = (threads < 1) ? 1 : Math.floor(threads)
-		this.log(`Starting batch: ${type}, ${threads}`)
+		this.log(`Starting batch: ${type}, ${threads} (${this.ns.format.time(this.GetDuration(type))})`)
 
 		return this.ns.exec(file, host, { threads: threads }, this.Target)
 	}
@@ -312,9 +327,23 @@ export class ServerController {
 		// this.log(this.security.String(this.ns))
 
 		const validateThreads = (type: Data.KBatchScript, threads: number): number => {
-			const ram = this.getRamCost(type)
-			const free = this.getAvailableRam()
-			return threads - (Math.max((ram * threads) - free, 0) / threads)
+			const ram = this.getRamCost(type, 1)
+			const available = Math.min(threads * ram, this.getAvailableRam())
+			// this.log(threads, ram, this.fr(this.getAvailableRam()))
+			// this.log(this.fr(ram * threads))
+			return available / ram
+		}
+
+		if (!this.security.IsMin()) {
+			const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
+			let weakenThreads = Math.ceil((this.security.Current - this.security.Min) / weakenStep)
+			weakenThreads = validateThreads('weaken', weakenThreads)
+
+			this.log(`Initial weaken: ${this.security.String(this.ns)}`)
+
+			this.startWeaken(weakenThreads)
+			this.startTimeout('weaken', this.Initialize)
+			return
 		}
 
 		if (!this.money.IsMax()) {
@@ -332,19 +361,9 @@ export class ServerController {
 			return
 		}
 
-		if (!this.security.IsMin()) {
-			const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
-			let weakenThreads = Math.ceil((this.security.Current - this.security.Min) / weakenStep)
-			weakenThreads = validateThreads('weaken', weakenThreads)
 
-			this.log(`Initial weaken: ${this.security.String(this.ns)}`)
-
-			this.startWeaken(weakenThreads)
-			this.startTimeout('weaken', this.Initialize)
-			return
-		}
-
-		this.log(`Initialization finished, starting batch sequence`)
+		// this.log(`Initialization finished, starting batch sequence`)
+		this.recalculateHackPercent()
 		this.startBatchSequence()
 	}
 
@@ -363,12 +382,6 @@ export class ServerController {
 		}
 
 		this.log(`TODO: Reserve ram: ${this.ns.format.ram(cost, 2)}`)
-
-
-		// we want to hack
-		// after hack we need to restore sec and grow
-		// we need to grow after hack
-		// to make grow finish faster we need to first weaken the effect of hack
 
 		const hackTime = this.GetDuration('hack')
 		const growTime = this.GetDuration('grow')

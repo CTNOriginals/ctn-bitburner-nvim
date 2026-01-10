@@ -14,9 +14,10 @@ const testHosts: string[] = [
 	// 'lexo-corp',
 	// 'fulcrumtech',
 	'foodnstuff',
+	'joesguns',
+	'sigma-cosmetics',
+	'hong-fang-tea',
 	'harakiri-sushi',
-	// 'sigma-cosmetics',
-	// 'joesguns',
 ]
 const testBlacklist: string[] = [
 	// 'foodnstuff',
@@ -40,7 +41,7 @@ export async function main(ns: NS) {
 	const host = ns.getHostname()
 	const controllers: Data.THostMap<ServerController> = {}
 	const hostList: string[] = []
-	const maxRam = ns.getServerMaxRam(host) * 0.5
+	const maxRam = ns.getServerMaxRam(host)// * 0.5
 
 	await Worm.ServerWorm(ns, host, (server: Server) => {
 		if (testBlacklist.includes(server.hostname)
@@ -93,7 +94,7 @@ export async function main(ns: NS) {
 
 		log([
 			`${controller.GetInfoString()}`,
-			` \t(${ns.format.percent(percent)})`,
+			`\t(${ns.format.percent(percent)})`,
 			` (${ns.format.ram(maxRam * percent)})`,
 		].join(''))
 		log('\n')
