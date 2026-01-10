@@ -15,8 +15,8 @@ const testHosts: string[] = [
 	// 'fulcrumtech',
 	'foodnstuff',
 	'harakiri-sushi',
-	'sigma-cosmetics',
-	'joesguns',
+	// 'sigma-cosmetics',
+	// 'joesguns',
 ]
 const testBlacklist: string[] = [
 	// 'foodnstuff',
@@ -96,6 +96,7 @@ export async function main(ns: NS) {
 			` \t(${ns.format.percent(percent)})`,
 			` (${ns.format.ram(maxRam * percent)})`,
 		].join(''))
+		log('\n')
 	}
 	log('\n')
 	await ns.asleep(1000)

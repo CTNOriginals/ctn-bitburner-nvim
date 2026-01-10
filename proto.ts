@@ -15,25 +15,22 @@ export async function main(n: NS) {
 	// 	log(`${server.hostname}: ${files}`)
 	// }, false, false, false)
 
-	const x = new test()
-	x.start(x.bar)
-	x.start(x.bar, 'hello', 'asdf')
+	const timeouts: number[] = []
+	for (let i = 1; i <= 5; i++) {
+		let id = setTimeout(() => {
+			const msg = `timeout: ${i} ${id}`
+			console.log(msg)
+			n.print(msg)
+		}, 1000 * i)
+		timeouts.push(id)
+
+		await n.asleep(1000)
+	}
+
+	n.atExit(() => {
+		for (const id of timeouts) {
+			clearTimeout(id)
+		}
+	})
 }
 
-class test {
-	public foo(x: string): string {
-		return `foo ${x}`
-	}
-
-	public bar(x: string): string {
-		return `bar ${this.foo(x)}`
-	}
-
-	public start(cb: (...args: any[]) => string, ...args: any[]) {
-		cb = cb.bind(this)
-		// ns.print(cb.arguments.toString())
-
-		ns.print(cb(...args))
-		ns.print('\n\n')
-	}
-}
