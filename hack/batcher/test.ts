@@ -41,7 +41,7 @@ export async function main(ns: NS) {
 	const host = ns.getHostname()
 	const controllers: Data.THostMap<ServerController> = {}
 	const hostList: string[] = []
-	const maxRam = ns.getServerMaxRam(host)// * 0.5
+	const maxRam = ns.getServerMaxRam(host) * 0.5
 
 	await Worm.ServerWorm(ns, host, (server: Server) => {
 		if (testBlacklist.includes(server.hostname)

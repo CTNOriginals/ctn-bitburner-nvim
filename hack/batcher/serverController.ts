@@ -178,10 +178,13 @@ export class ServerController {
 		const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
 		let effect = (type == 'hack')
 			? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
-			: this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, this.hostServer.cpuCores)
+			: 0.004 * this.getGrowThreadCount()
+		// : this.ns.growthAnalyzeSecurity(this.getGrowThreadCount(), this.Target, this.hostServer.cpuCores)
 
-		// this.log(`threds: (${this.security.Min} - (${this.security.Min} - ${this.fn(effect)})) / ${weakenStep} = ${(this.security.Min - Math.abs(this.security.Min - effect)) / weakenStep}`)
-		return ((this.security.Min - Math.abs(this.security.Min - effect)) / weakenStep)
+		// this.ns.formulas.hacking.growPercent
+		// this.log(`weaken threds: (${this.security.Min} - ${this.fn(effect)}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
+		return (Math.abs(this.security.Min - (this.security.Min - effect)) / weakenStep)
+		// return (((this.security.Min - effect)) / weakenStep)
 	}
 
 	private getRamCost(type: Data.KBatchScript, threads: number = 1): number {
@@ -245,8 +248,14 @@ export class ServerController {
 
 		this.hackPercent = singleHackPercent * mult
 
-		// this.log(`${this.fr(minRam)} / ${lowestVal} = ${this.fn(mult)} = ${this.hackPercent}`)
-		//
+		if (this.getTotalRamCost() > this.getAvailableRam()) {
+			// this.log(`${this.getAvailableRam()} / ${this.getTotalRamCost()} = ${this.getAvailableRam() / this.getTotalRamCost()}`)
+			this.hackPercent *= this.getAvailableRam() / this.getTotalRamCost()
+		}
+
+		this.log(`${this.fr(minRam)} / ${lowestVal} = ${this.fn(mult)} = ${this.hackPercent}`)
+		this.hackPercent = Math.min(this.hackPercent, this.maxHackPercent)
+
 		// this.log(`hack: ${this.getHackThreadCount()}`)
 		// this.log(`weak: ${this.getWeakenThreadCount('hack')}`)
 		// this.log(`grow: ${this.getGrowThreadCount()}`)
@@ -370,10 +379,10 @@ export class ServerController {
 	// Hacks the target once and restoring security and money afterwards instantly
 	private async startBatchSequence() {
 		const space = this.ns.getServerMaxRam(this.hostServer.hostname)
-		const freeRam = this.getFreeRam()
+		const freeRam = this.getAvailableRam()
 		const cost = this.getTotalRamCost()
 		if (cost > space) {
-			this.log(`Not enough ram to run batch sequence:\nTotal Space: ${this.ns.format.ram(freeRam, 2)}\nNeeded: ${cost}`)
+			this.log(`Not enough ram to run batch sequence:\nTotal Space: ${this.fr(freeRam)}\nNeeded: ${this.fr(cost)}`)
 			return
 		} else if (cost > freeRam) {
 			while (cost > this.getFreeRam()) {

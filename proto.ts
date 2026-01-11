@@ -15,22 +15,25 @@ export async function main(n: NS) {
 	// 	log(`${server.hostname}: ${files}`)
 	// }, false, false, false)
 
-	const timeouts: number[] = []
-	for (let i = 1; i <= 5; i++) {
-		let id = setTimeout(() => {
-			const msg = `timeout: ${i} ${id}`
-			console.log(msg)
-			n.print(msg)
-		}, 1000 * i)
-		timeouts.push(id)
+	// log(`${ns.getServerMaxMoney(host)} > ${ns.getServerMoneyAvailable(host)}`)
+	// if (ns.getServerMaxMoney(host) == ns.getServerMoneyAvailable(host)) {
+	// 	ns.exec('/hack/batcher/scripts/hack.ts', 'home', { threads: 50 }, host)
+	// 	const time = ns.getHackTime(host)
+	// 	log(ns.format.time(time))
+	// 	await ns.sleep(time + 10)
+	// }
 
-		await n.asleep(1000)
+	const host = 'foodnstuff'
+	const server = ns.getServer('home')
+	log(ns.getServerGrowth(host))
+	log(server.cpuCores)
+	log(server.hostname)
+	for (let i = 1; i <= 10; i++) {
+		const threads = i * 10
+		log(ns.formulas.hacking.growAmount(ns.getServer(host), ns.formulas.mockPerson(), threads, server.cpuCores))
+		log(ns.growthAnalyzeSecurity(threads, host, ns.getServer().cpuCores))
+		log(ns.growthAnalyzeSecurity(threads, host, 1000))
+		log(ns.growthAnalyzeSecurity(threads, host, -1))
+		log('\n')
 	}
-
-	n.atExit(() => {
-		for (const id of timeouts) {
-			clearTimeout(id)
-		}
-	})
 }
-

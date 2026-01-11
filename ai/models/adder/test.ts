@@ -40,14 +40,14 @@ export function main(ns: NS) {
 			inputs: { x: 1, y: 1, cin: 1 },
 			outputs: { sum: 1, cout: 1 }
 		},
-	], 100000, 0.05)
+	], 100, 0.5)
 
-	logger.log('000: ', ai.GetOutputsValues(ai.Test({ x: 0, y: 0, cin: 0 })).join(''))
-	logger.log('001: ', ai.GetOutputsValues(ai.Test({ x: 0, y: 0, cin: 1 })).join(''))
-	logger.log('010: ', ai.GetOutputsValues(ai.Test({ x: 0, y: 1, cin: 0 })).join(''))
-	logger.log('011: ', ai.GetOutputsValues(ai.Test({ x: 0, y: 1, cin: 1 })).join(''))
-	logger.log('100: ', ai.GetOutputsValues(ai.Test({ x: 1, y: 0, cin: 0 })).join(''))
-	logger.log('101: ', ai.GetOutputsValues(ai.Test({ x: 1, y: 0, cin: 1 })).join(''))
-	logger.log('110: ', ai.GetOutputsValues(ai.Test({ x: 1, y: 1, cin: 0 })).join(''))
-	logger.log('111: ', ai.GetOutputsValues(ai.Test({ x: 1, y: 1, cin: 1 })).join(''))
+	logger.log('000: ', ai.GetOutputValues(ai.Test({ x: 0, y: 0, cin: 0 })).join(''))
+	logger.log('001: ', ai.GetOutputValues(ai.Test({ x: 0, y: 0, cin: 1 })).join(''))
+	logger.log('010: ', ai.GetOutputValues(ai.Test({ x: 0, y: 1, cin: 0 })).join(''))
+	logger.log('011: ', ai.GetOutputValues(ai.Test({ x: 0, y: 1, cin: 1 })).join(''))
+	logger.log('100: ', ai.GetOutputValues(ai.Test({ x: 1, y: 0, cin: 0 })).join(''))
+	logger.log('101: ', ai.GetOutputValues(ai.Test({ x: 1, y: 0, cin: 1 })).join(''))
+	logger.log('110: ', ai.GetOutputValues(ai.Test({ x: 1, y: 1, cin: 0 })).join(''))
+	logger.log('111: ', ai.GetOutputValues(ai.Test({ x: 1, y: 1, cin: 1 })).join(''))
 }
