@@ -14,10 +14,10 @@ const testHosts: string[] = [
 	// 'lexo-corp',
 	// 'fulcrumtech',
 	'foodnstuff',
-	'joesguns',
-	'sigma-cosmetics',
-	'hong-fang-tea',
-	'harakiri-sushi',
+	// 'joesguns',
+	// 'sigma-cosmetics',
+	// 'hong-fang-tea',
+	// 'harakiri-sushi',
 ]
 const testBlacklist: string[] = [
 	// 'foodnstuff',
@@ -31,7 +31,6 @@ export async function main(ns: NS) {
 	const logger = new Logger(ns)
 	const log = (...msg: any[]) => logger.log(...msg)
 
-
 	for (const [_key, ps] of ns.ps().entries()) {
 		if (Object.values(Data.BatchScripts).includes(ps.filename)) {
 			ns.kill(ps.pid)
@@ -41,7 +40,7 @@ export async function main(ns: NS) {
 	const host = ns.getHostname()
 	const controllers: Data.THostMap<ServerController> = {}
 	const hostList: string[] = []
-	const maxRam = ns.getServerMaxRam(host) * 0.5
+	const maxRam = ns.getServerMaxRam(host) * 0.1
 
 	await Worm.ServerWorm(ns, host, (server: Server) => {
 		if (testBlacklist.includes(server.hostname)

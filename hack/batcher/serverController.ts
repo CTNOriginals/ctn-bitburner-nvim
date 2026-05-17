@@ -161,20 +161,21 @@ export class ServerController {
 		return Math.min(this.money.Max * this.hackPercent, this.money.Current * this.maxHackPercent)
 	}
 
-	private getHackThreadCount(): number {
-		return (this.ns.hackAnalyzeThreads(this.Target, this.gettTargetMoney()))
+	private getHackThreadCount(ceil: boolean = false): number {
+		const threads = (this.ns.hackAnalyzeThreads(this.Target, this.gettTargetMoney()))
+		return (ceil) ? Math.ceil(threads) : threads
 	}
 
-	private getGrowThreadCount(): number {
+	private getGrowThreadCount(ceil: boolean = false): number {
 		const growMult = this.money.Max / (this.money.Max - this.gettTargetMoney())
 		const threads = this.ns.growthAnalyze(this.Target, growMult, this.hostServer.cpuCores)
 
 		// this.log(this.gettTargetMoney())
 		// this.log(`${this.fn(this.money.Max)} / (${this.fn(this.money.Max - this.gettTargetMoney())}) = ${this.fn(growMult)} = ${this.fn(threads)}`)
-		return (threads)
+		return (ceil) ? Math.ceil(threads) : threads
 	}
 
-	private getWeakenThreadCount(type: Exclude<keyof Data.TBatchScript, 'weaken'>): number {
+	private getWeakenThreadCount(type: Exclude<keyof Data.TBatchScript, 'weaken'>, ceil: boolean = false): number {
 		const weakenStep = this.ns.weakenAnalyze(1, this.hostServer.cpuCores)
 		let effect = (type == 'hack')
 			? this.ns.hackAnalyzeSecurity(this.getHackThreadCount(), this.Target)
@@ -183,8 +184,9 @@ export class ServerController {
 
 		// this.ns.formulas.hacking.growPercent
 		// this.log(`weaken threds: (${this.security.Min} - ${this.fn(effect)}) / ${weakenStep} = ${(this.security.Min - effect) / weakenStep}`)
-		return (Math.abs(this.security.Min - (this.security.Min - effect)) / weakenStep)
 		// return (((this.security.Min - effect)) / weakenStep)
+		const threads = Math.abs(this.security.Min - (this.security.Min - effect)) / weakenStep
+		return (ceil) ? Math.ceil(threads) : threads
 	}
 
 	private getRamCost(type: Data.KBatchScript, threads: number = 1): number {
@@ -193,16 +195,16 @@ export class ServerController {
 	/** Returns the total ram it takes to run a full sequence */
 	private getTotalRamCost(ceil: boolean = true): number {
 		const scripts: [Data.KBatchScript, number][] = [
-			['hack', this.getHackThreadCount()],
-			['weaken', this.getWeakenThreadCount('hack')],
-			['grow', this.getGrowThreadCount()],
-			['weaken', this.getWeakenThreadCount('grow')],
+			['hack', this.getHackThreadCount(ceil)],
+			['weaken', this.getWeakenThreadCount('hack', ceil)],
+			['grow', this.getGrowThreadCount(ceil)],
+			['weaken', this.getWeakenThreadCount('grow', ceil)],
 		]
 		let ram = 0
 
 		for (const pair of scripts) {
-			const threads = (ceil) ? Math.ceil(pair[1]) : pair[1]
-			ram += this.getRamCost(pair[0], threads)
+			// const threads = (ceil) ? Math.ceil(pair[1]) : pair[1]
+			ram += this.getRamCost(pair[0], pair[1])
 		}
 
 		return ram
@@ -310,7 +312,7 @@ export class ServerController {
 			}
 		}
 
-		threads = (threads < 1) ? 1 : Math.floor(threads)
+		threads = (threads < 1) ? 1 : Math.ceil(threads)
 		this.log(`Starting batch: ${type}, ${threads} (${this.ns.format.time(this.GetDuration(type))})`)
 
 		return this.ns.exec(file, host, { threads: threads }, this.Target)
